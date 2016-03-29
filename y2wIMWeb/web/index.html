@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>y2wIM Web Demo</title>
+    <link rel="shortcut icon" href="images/logo.ico">
+	<link rel="stylesheet" href="css/base.css"/>
+	<link rel="stylesheet" href="css/animate.css"/>
+	<link rel="stylesheet" href="css/index.css?v=1"/>
+</head>
+<body>
+    <div class="content">
+	<div class="wrapper radius8px" id="j-wrapper">
+        <div class="index-logo"></div>
+		<form action="/" method="post">
+			<div class="row tc">
+				<input type="text" class="radius4px box-sizing" id="email" autofocus="autofocus" autocomplete="on" placeholder="请输入邮箱"/>
+			</div>
+			<div class="row tc">
+				<input type="password" class="radius4px box-sizing" id="password" placeholder="请输入密码"/>
+			</div>
+			<div class="row">
+				<div class="error-msg hide" id="errorMsg">密码错误</div>
+			</div>
+			<div class="row tc">
+				<button type="button" class="btn btn-login radius4px" id="loginBtn">登录</button>
+			</div>
+		</form>
+		<div class="row tc"><a class="btn btn-register radius4px" href="./register.html">注册</a></div>
+	</div>
+    </div>
+	<div id="footer" class="footer tc">
+		<p>Copyright &copy;2015 liyueyun.com</p>
+	</div>
+	<script src="js/3rd/jquery-1.7.1.min.js"></script>
+	<script src="js/3rd/md5.js"></script>
+	<script src="js/common/utils.js"></script>
+    <script src="js/core/config.js"></script>
+    <script src="js/core/utils.js"></script>
+    <script src="js/core/user.js"></script>
+	<script src="js/login.js"></script>
+</body>
+</html>

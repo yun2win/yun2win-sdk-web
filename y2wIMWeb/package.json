@@ -1,0 +1,11 @@
+{
+  "name": "Y2WIMWeb",
+  "version": "0.1",
+  "description": "",
+  "main": "app.js",
+  "author": "",
+  "license": "",
+  "dependencies": {
+    "url": "~0.11.0"
+  }
+}

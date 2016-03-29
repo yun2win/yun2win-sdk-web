@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>y2wIM Web Demo</title>
+    <link rel="shortcut icon" href="images/logo.ico">
+	<link rel="stylesheet" href="css/base.css"/>
+	<link rel="stylesheet" href="css/animate.css"/>
+	<link rel="stylesheet" href="css/index.css?v=1"/>
+</head>
+<body onload="onload();">
+    <div class="content">
+        <div class="wrapper radius8px" id="j-wrapper">
+            <div class="index-logo"></div>
+            <form action="" method="post" class="m-register">
+                <div class="row tc">
+                    <input type="text" class="radius5px box-sizing" id="email" autofocus="autofocus" autocomplete="off" placeholder="邮箱"  maxlength="20"/>
+                </div>
+                <div class="row tc">
+                    <input type="text" class="radius5px box-sizing" id="name" autocomplete="off" placeholder="昵称:限10位汉字、字母或者数字" maxlength="10"/>
+                </div>
+                <div class="row tc">
+                    <input type="password" class="radius5px box-sizing" id="password" autocomplete="off" placeholder="密码:6~20位字母或者数字" maxlength="20"/>
+                </div>
+                <div class="row">
+                    <div class="error-msg hide" id="errorMsg">此邮箱已存在</div>
+                </div>
+                <div class="row tc">
+                    <button type="button" class="btn btn-login" id="submit">注册</button>
+                </div>
+            </form>
+            <div class="u-redirect"><a href="./index.html">已有帐号？直接登录</a></div>
+        </div>
+    </div>
+    <div id="footer" class="footer tc">
+        <p>Copyright &copy;2015 liyueyun.com</p>
+    </div>
+    <script type="text/javascript">
+        window.onload = function(){
+            setTimeout(function(){
+                document.getElementById('email').value = '';
+                document.getElementById('name').value = '';
+                document.getElementById('password').value = '';
+            }, 0);
+        }
+    </script>
+    <script src="js/3rd/jquery-1.7.1.min.js"></script>
+	<script src="js/3rd/md5.js"></script>
+    <script src="js/core/config.js"></script>
+    <script src="js/core/utils.js"></script>
+    <script src="js/core/user.js"></script>
+	<script src="js/register.js"></script>
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<title>y2wIM Web Demo</title>
+    <link rel="shortcut icon" href="images/logo.ico">
+	<link rel="stylesheet" href="css/base.css"/>
+	<link rel="stylesheet" href="css/animate.css"/>
+	<link rel="stylesheet" href="css/jquery-ui.css"/>
+	<link rel="stylesheet" href="css/main.css"/>
+</head>
+<body>
+	<div class="wrapper box-sizing">
+		<div class="content">
+            <!-- 左 -->
+			<div class="left-panel">
+				<div class="title">
+                    <span class="logo"></span>
+                    <span class="avatar avatar-me hide" id="myAvatar" >
+					    <img src="" alt=""/>
+                    </span>
+					<span class="hide"><img src="images/pen.png" class="u-modify" id="showMyInfo"></span>
+					<span class="exit" title="退出" id="j-logout">退出</span>
+				</div>
+				<div class="tab" id="tab">
+					<a href="javascript:;" data-type=0><span class="userconversation cur"></span></a>
+					<a href="javascript:;" data-type=1><span class="contact"></span></a>
+					<a href="javascript:;" data-type=2><span class="group"></span></a>
+				</div>
+                <div class="tab-panel" id="userConversationPanel" data-type=0>
+                    <ul class="list"></ul>
+                </div>
+                <div class="tab-panel hide" id="contactPanel" data-type=1>
+                    <div class="custom-item add-contact" id="addFriend">
+                        <div class="item-avatar">
+                            <img  class="panel_image" src="images/contact_add.png" alt="添加好友"/>
+                        </div>
+                        <div class="item-text">
+                            <p class="single-row color-white">添加好友</p>
+                        </div>
+                    </div>
+                    <ul class="list"></ul>
+                </div>
+                <div class="tab-panel hide" id="groupPanel" data-type=2>
+                    <ul class="list"></ul>
+                </div>
+			</div>
+            <!-- 右 -->
+			<div class="right-panel" id="rightPanel">
+				<div class="chat-box hide">
+					<div class="title" id="chatTitle">
+						<img src="" width="56" height="56" class="radius-circle img hide" id="headImg"/>
+						<span id="chatName" class="name"></span>
+                        <span class="btn-chat-info" id="btnChatInfo"></span>
+					</div>
+                    <div class="chat-info hide" id="chatInfo">
+                        <div class="chat-members" id="chatMembers">
+                            <div class="chat-member hide" id="addChatMembers">
+                                <span class="tool plus"></span>
+                            </div>
+                            <div class="chat-member hide" id="removeChatMembers">
+                                <span class="tool sub"></span>
+                            </div>
+                        </div>
+                        <ul class="chat-nav" id="chatNav">
+                            <li class="hide" id="editContactTitle">
+                                <span class="title">修改备注</span>
+                                <span class="text"></span>
+                                <input class="single hide"/>
+                                <button class="editor btn btn-edit radius5px fr hide">修改</button>
+                                <button class="ok btn btn-ok radius5px fr hide">确定</button>
+                                <button class="cancel btn btn-cancel radius5px fr hide">取消</button>
+                            </li>
+                            <li class="hide" id="chatGroupNickName">
+                                <span class="title">我在本群的昵称</span>
+                                <span class="text" id="chatGroupNickNameText"></span>
+                                <input class="single hide" id="chatGroupNickNameInput"/>
+                                <span class="editor" id="chatGroupNickNameEditor"></span>
+                            </li>
+                            <li class="favorite hide" id="chatFavorite">
+                                <span class="title">收藏到群列表</span>
+                                <div class="switch">
+                                    <img src="images/btn_switch.png">
+                                    <span class="off">&nbsp;off</span>
+                                    <span class="on">on&nbsp;</span>
+                                </div>
+                            </li>
+                        </ul>
+                        <div class="chat-quit hide" id="chatQuit">
+                            <button class="btn btn-del radius4px hide" id="btnChatQuit"></button>
+                        </div>
+                    </div>
+
+                    <div class="chat-content-wrap box-sizing" id="j-chatContentWrap">
+                        <div class="chat-content box-sizing" id="j-chatContent">
+                        </div>
+                    </div>
+					<div class="chat-mask"></div>
+					<div class="chat-editor box-sizing" id="j-chatEditor" data-disabled="1">
+						<span class="msg-type" id="j-msgType">
+							<a href="javascript:;" class="icon icon-file" data-type="file"></a>
+						</span>
+						<form action="#" id="j-uploadForm">
+							<input multiple="multiple" type="file" accept="image/*" name="file" id="j-uploadFile" class="hide"/>
+						</form>
+						<textarea id="j-messageText" class="msg-input box-sizing radius5px" rows="1" autofocus="autofocus" maxlength="500" placeholder="给小伙伴说些什么吧..."></textarea>
+						<a href="javascript:;" class="btn-send radius4px" id="j-sendBtn">发送</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+    <div class="main-footer tc">
+        <p>Copyright &copy;2015 liyueyun.com</p>
+    </div>
+
+	<!-- 退出确认框 -->
+	<div class="dialog radius5px hide" id="j-logoutDialog">
+		<span class="close" id="j-closeDialog"></span>
+		<div class="content tc">确定要退出理约云网页版吗？</div>
+		<div class="buttons tc">
+			<button class="btn radius4px btn-cancel" id="j-cancelBtn">取消</button>
+			<button class="btn radius4px btn-ok" id="j-okBtn">确定</button>
+		</div>
+	</div>
+	<!-- 添加好友 -->
+	<div class="m-dialog hide" id="addFriendBox">
+		<div class="title box-sizing">
+			添加好友
+			<i class="close"></i>
+		</div>
+		<div class="content tc">
+			<input type="text" class="ipt radius5px box-sizing j-account" placeholder="请输入帐号"/>
+			<div class="info f-cb">
+                <div class="item-avatar">
+                    <span class="avatar avatar-add-contact">
+                        <img src="">
+                    </span>
+                </div>
+				<div class="desc">
+					<p class="j-nickname"></p>
+					<p><span class="j-username"></span></p>
+                    <span class="j-uid hide"></span>
+				</div>
+			</div>
+			<div class="tip">
+			</div>
+		</div>
+		<div class="btns tc">
+			<button class="btn btn-cancel radius4px cancel j-close">取消</button>
+			<button class="btn btn-ok radius4px search j-search">确定</button>
+			<button class="btn btn-cancel radius4px back j-back">继续搜索</button>
+			<button class="btn btn-ok radius4px add j-add">加为好友</button>
+			<button class="btn btn-ok radius4px done j-close">完成</button>
+			<button class="btn btn-ok radius4px chat j-chat">聊天</button>
+			<button class="btn btn-del radius4px blacklist j-blacklist">移出黑名单</button>
+		</div>		
+	</div>
+	<!-- 个人信息 -->
+	<div class="m-card m-card-1 hide" id="myInfo">
+		<i class="close"></i>
+		<div class="uInfo f-cb">
+            <span class="avatar avatar-user-info">
+			    <img class="u-icon modifyAvatar j-modifyAvatar" src="" alt="更换头像">
+            </span>
+			<div class="desc">
+				<p class="j-nickname nick"></p>
+				<img src="" class="j-gender gender">
+				<p><span class="j-username"></span></p>
+			</div>
+		</div>
+		<div class="infos">
+			<div class="operate">
+				<span class="edit j-edit">编辑</span>
+				<span class="save j-save">保存</span>
+				<span class="cancel j-cancel"> 取消</span>
+			</div>		
+			<div class="tt">基本信息</div>
+			<div class="showUI">
+				<div class="items">
+					<div class="item">手机</div>
+					<div class="j-tel"></div>
+				</div>
+			</div>
+			<div class="editUI">
+				<div class="items">
+					<div class="item">昵称</div>
+					<input type="text" class="e-nick ipt" maxlength="10">
+				</div>
+				<div class="items">
+					<div class="item">手机</div>
+					<input type="text" class="e-tel ipt ipt-1" maxlength="13">	
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="mask" class="mask hide"></div>
+	<!-- js-->
+	<script src="js/3rd/jquery-1.7.1.min.js"></script>
+	<script src="js/3rd/jquery-ui-datepicker.js"></script>
+    <script src="js/3rd/jquery.cropit.js"></script>
+    <script src="js/3rd/async.js"></script>
+    <script src="js/3rd/ajaxFileUpload.js"></script>
+    <script src="js/common/utils.js"></script>
+    <script src="js/core/config.js?v=0.1"></script>
+    <script src="js/core/utils.js?v=0.1"></script>
+    <script src="js/core/user.js?v=0.1"></script>
+    <script src="js/core/userConversation.js?v=0.1"></script>
+    <script src="js/core/contact.js?v=0.1"></script>
+    <script src="js/core/message.js?v=0.1"></script>
+    <script src="js/core/userSession.js?v=0.1"></script>
+    <script src="js/core/sessionMember.js?v=0.1"></script>
+    <script src="js/core/session.js?v=0.1"></script>
+    <script src="js/core/attachment.js?v=0.1"></script>
+    <script src="js/core/y2wIMSDK.min.js"></script>
+    <script src="js/widget/y2wIMBridge.js"></script>
+    <script src="js/widget/tab.js?v=0.1"></script>
+    <script src="js/widget/chooseAvatar.js?v=0.1"></script>
+    <script src="js/widget/chatInfo.js?v=0.1"></script>
+    <script src="js/widget/selector.js?v=0.1"></script>
+    <script src="js/widget/chat.js?v=0.1"></script>
+	<script src="js/main.js?v=0.1"></script>
+</body>
+</html>
