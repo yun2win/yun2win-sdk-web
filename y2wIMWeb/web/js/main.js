@@ -20,7 +20,7 @@ var y2w = {
 
         //同步用户会话，联系人与群
         setTimeout(function(){
-            async.parallel([
+            async.series([
                     function(cb) {
                         that.syncUserConversations(cb);
                     },
@@ -40,8 +40,6 @@ var y2w = {
 
         //连接推送服务
         currentUser.y2wIMInit();
-    },
-    initUI:function(){
     },
     initNode: function () {
         this.$logout = $('#j-logout');

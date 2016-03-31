@@ -68,11 +68,22 @@ var usersLocalStorageSingleton = (function(){
         this.setCurrentUserId = function(userId){
             localStorage.setItem('y2wIMCurrentUserId', userId);
         }
+        this.removeCurrentId = function(){
+            localStorage.removeItem('y2wIMCurrentUserId')
+        }
         this.getCurrentUserInfo = function(){
             return JSON.parse(localStorage.getItem(this.getCurrentUserId()));
         }
         this.setCurrentUserInfo = function(user){
             localStorage.setItem(user.id, JSON.stringify(user));
+        }
+        this.removeCurrentUserInfo = function(){
+            delete currentUser.appKey;
+            delete currentUser.secret;
+            delete currentUser.token;
+            delete currentUser.imToken;
+            this.setUsers(_users.getUsers());
+            localStorage.removeItem(currentUser.id);
         }
         this.getUsers = function(){
             var users = localStorage.getItem(this.getCurrentUserId() + '_users');
@@ -216,6 +227,11 @@ CurrentUser.prototype.init = function(){
     this.userSessions.init();
 }
 CurrentUser.prototype.logout = function(cb){
+    try {
+        this.y2wIMBridge.disconnect();
+    }catch(e){}
+    Users.getInstance().localStorage.removeCurrentUserInfo();
+    Users.getInstance().localStorage.removeCurrentId();
     cb();
 }
 CurrentUser.prototype.toJSON = function(){

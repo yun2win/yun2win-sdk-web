@@ -42,9 +42,18 @@ var SessionMembers = function(session){
     this.createSessionMember = function(obj){
         return new SessionMember(this, obj);
     }
+    /**
+     * 获取会话成员
+     * @param userId:用户id
+     * @returns sessionMember
+     */
     this.getMember = function(userId){
         return _list[userId];
     }
+    /**
+     * 获取会话成员列表
+     * @returns [sessionMember]
+     */
     this.getMembers = function(){
         var foo = [];
         for(var k in _list){
@@ -53,6 +62,11 @@ var SessionMembers = function(session){
         }
         return foo;
     }
+    /**
+     * 获取p2p会话相对方的会话成员对象
+     * @param userId
+     * @returns sessionMember
+     */
     this.getP2POtherSideMember = function(userId){
         for(var k in _list){
             if(k != userId)
@@ -91,6 +105,15 @@ sessionMembersRemote.prototype.sync = function(cb) {
         cb();
     })
 }
+/**
+ * 添加会话成员
+ * @param userId:用户id
+ * @param name:用户名称
+ * @param role['master'|'admin'|'user']:会话成员角色，master:群主;admin:管理员;user:一般成员
+ * @param avatarUrl:头像
+ * @param status['active'|'封禁']:用户状态，active:有效;inactive:封禁
+ * @param cb
+ */
 sessionMembersRemote.prototype.add = function(userId, name, role, avatarUrl, status, cb) {
     var that = this;
     cb = cb || nop;
@@ -110,6 +133,11 @@ sessionMembersRemote.prototype.add = function(userId, name, role, avatarUrl, sta
         cb(null, data);
     })
 }
+/**
+ * 删除会话成员
+ * @param memberId:会话成员id
+ * @param cb
+ */
 sessionMembersRemote.prototype.remove = function(memberId, cb){
     var that = this;
     cb = cb || nop;
@@ -160,6 +188,10 @@ SessionMember.prototype.toJSON = function(){
         status: this.status
     }
 }
+/**
+ * 获取头像
+ * @returns url
+ */
 SessionMember.prototype.getAvatarUrl = function(){
     return this.user.getAvatarUrl();
 }

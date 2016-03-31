@@ -19,6 +19,14 @@ var Sessions = function(user){
     this.createSession = function(obj){
         return new Session(this, obj);
     }
+    /**
+     * 获取会话
+     * @param targetId:会话目标id
+     * type=='p2p':targetId=user.id(对方用户);
+     * type=='group':targetId=session.id(会话id)
+     * @param type['p2'|'group']:会话场景类型
+     * @param cb
+     */
     this.get = function(targetId, type, cb){
         var that = this;
         cb = cb || nop;
@@ -53,9 +61,22 @@ var Sessions = function(user){
                 cb();
         })
     }
+    /**
+     * 根据SessionId获取本地会话
+     * @param id
+     * @returns {*}
+     */
     this.getById = function(id){
         return _sessionList[id];
     }
+    /**
+     * 获取会话目标id
+     * type=='p2p':targetId=user.id(对方用户);
+     * type=='group':targetId=session.id(会话id)
+     * @param id:会话Id
+     * @param type['p2p|'group']:会话场景类型
+     * @returns targetId
+     */
     this.getTargetId = function(id, type){
         for(var k in _targetList){
             if(_targetList[k].id == id && _targetList[k].type == type)
@@ -96,6 +117,15 @@ sessionsLocalStorage.prototype.setList = function(list){
 var sessionsRemote = function(sessions) {
     this.sessions = sessions;
 }
+/**
+ * 同步会话
+ * @param targetId:会话目标id
+ * type=='p2p':targetId=user.id(对方用户);
+ * type=='group':targetId=session.id(会话id)
+ * @param type['p2p|'group']:会话场景类型
+ * @param type
+ * @param cb
+ */
 sessionsRemote.prototype.sync = function(targetId, type, cb){
     var that = this;
     cb = cb || nop;
@@ -125,6 +155,14 @@ sessionsRemote.prototype.sync = function(targetId, type, cb){
         })
     })
 }
+/**
+ * 添加会话
+ * @param type:['p2p'|'group']:会话场景类型
+ * @param name:名称
+ * @param secureType['public'|'private']:安全类型，通常使用private
+ * @param avatarUrl:头像
+ * @param cb
+ */
 sessionsRemote.prototype.add = function(type, name, secureType, avatarUrl, cb){
     var that = this;
     cb = cb || nop;
@@ -144,6 +182,11 @@ sessionsRemote.prototype.add = function(type, name, secureType, avatarUrl, cb){
         cb(null, session);
     })
 }
+/**
+ * 更新会话信息
+ * @param session
+ * @param cb
+ */
 sessionsRemote.prototype.store = function(session, cb){
     var that = this;
     var targetId = this.sessions.getTargetId(session.id, session.type);
@@ -207,6 +250,10 @@ Session.prototype.toJSON = function(){
         updatedAt: this.updatedAt
     }
 }
+/**
+ * 获取用户会话对象
+ * @returns userConversation
+ */
 Session.prototype.getConversation = function(){
     if(this.type == 'p2p'){
         var member = this.members.getP2POtherSideMember(this.sessions.user.id);

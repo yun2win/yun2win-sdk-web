@@ -9,12 +9,25 @@ var Messages = function(session){
     this.sessionUpdatedAt = globalMinDate;
     this.remote = new messagesRemote(this);
 }
+/**
+ * 获取消息数量
+ * @returns {Number}
+ */
 Messages.prototype.count = function(){
     return this._list.length;
 }
+/**
+ * 获取消息列表
+ * @returns [messages]
+ */
 Messages.prototype.getMessages = function(){
     return this._list;
 }
+/**
+ * 创建消息对象
+ * @param obj
+ * @returns message
+ */
 Messages.prototype.createMessage = function(obj){
     return new Message(this, obj);
 }

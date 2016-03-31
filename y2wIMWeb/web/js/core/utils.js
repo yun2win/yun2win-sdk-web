@@ -33,6 +33,11 @@ baseRequest.get = function(url, ts, token, cb){
             cb(null, data);
         },
         error: function(e) {
+            if(e.status == 401){
+                alert('您登录的信息已过期,请重新登录!');
+                y2w.logout();
+                return;
+            }
             cb(e);
         }
     });
@@ -55,6 +60,11 @@ baseRequest.post = function(url, params, token, cb){
             cb(null, data);
         },
         error: function(e) {
+            if(e.status == 401){
+                alert('您登录的信息已过期,请重新登录!');
+                y2w.logout();
+                return;
+            }
             cb(e);
         }
     });
@@ -77,6 +87,11 @@ baseRequest.delete = function(url, params, token, cb){
             cb(null, data);
         },
         error: function(e) {
+            if(e.status == 401){
+                alert('您登录的信息已过期,请重新登录!');
+                y2w.logout();
+                return;
+            }
             cb(e);
         }
     });
@@ -99,6 +114,11 @@ baseRequest.put = function(url, params, token, cb){
             cb(null, data);
         },
         error: function(e) {
+            if(e.status == 401){
+                alert('您登录的信息已过期,请重新登录!');
+                y2w.logout();
+                return;
+            }
             cb(e);
         }
     });
@@ -135,6 +155,11 @@ baseRequest.uploadBase64Image = function(url, fileName, imageData, token, cb){
         if (xhr.readyState == 4) {
             if (xhr.status == 200) {
                 cb(null, JSON.parse(xhr.responseText));
+            }
+            else if(xhr.status == 401){
+                alert('您登录的信息已过期,请重新登录!');
+                y2w.logout();
+                return;
             }
             else{
                 cb(xhr.responseText);
@@ -181,6 +206,12 @@ y2wAuthorizeRequest.post = function(url, params, token, cb){
             cb(null, data);
         },
         error: function(e) {
+            if(e.status == 400){
+                //appKey或secret不正确，重新登录
+                alert('您登录的信息已过期,请重新登录!');
+                y2w.logout();
+                return;
+            }
             cb(e);
         }
     });

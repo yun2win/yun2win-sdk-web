@@ -186,7 +186,7 @@ var y2wIMBridge = function(user){
                         return;
                     }
                     console.info('sync token success');
-                    that.init();
+                    that.connect();
                 })
                 break;
             case y2wIM.connectionReturnCode.appKeyIsInvalid:
@@ -194,10 +194,17 @@ var y2wIMBridge = function(user){
                 break;
             case y2wIM.connectionReturnCode.kicked:
                 console.warn('disconnected: another divice has connected');
+                alert('您的帐号在其它地方登录，请重新登录');
+                y2w.logout();
                 break;
         }
     };
-    var onConnectionStatusChanged = function (status, msg) {
+    /**
+     * 连接状态变更处理
+     * @param status:连接状态
+     * @param msg:连接信息
+     */
+    this.onConnectionStatusChanged = function (status, msg) {
         switch (status) {
             case y2wIM.connectionStatus.connecting:
                 console.log('connecting');
@@ -245,7 +252,6 @@ var y2wIMBridge = function(user){
                     break;
                 case y2wIM.sendReturnCode.sessionMTSOnClientHasExpired:
                     console.error('update session error: session mts on client has expired');
-                    //客户端重新获取Session后重新发送消息
                     break;
                 default:
                     console.log(returnCode);
@@ -330,15 +336,21 @@ var y2wIMBridge = function(user){
         }
     };
 
+    this.connect();
+}
+y2wIMBridge.prototype.connect = function(){
     var opts = {
         appKey: this.user.appKey,
         token: this.user.imToken,
         uid: this.user.id.toString(),
-        onConnectionStatusChanged: onConnectionStatusChanged,
+        onConnectionStatusChanged: this.onConnectionStatusChanged,
         onMessage: this.onMessage
     };
     this._client = y2wIM.connect(opts);
-
+}
+y2wIMBridge.prototype.disconnect = function(cb){
+    cb = cb || nop;
+    this._client.disconnect(cb);
 }
 y2wIMBridge.prototype.transToIMSession = function(busiSession, withMembers, time){
     var session = {};
@@ -464,6 +476,17 @@ y2wIMBridge.prototype.handleSendFileMessage = function(sendObj, cb){
     }
 }
 
+/**
+ * 发送文字消息
+ * @param targetId:目标Id
+ * @param scene:会话场景类型
+ * @param text:文字
+ * @param options:{
+ *  showMsg: showMsg//UI显示消息
+ *  storeMsgFailed: storeMsgFailed//消息保存失败
+ *  storeMsgDone: storeMsgDone//消息保存成功
+ * }
+ */
 y2wIMBridge.prototype.sendTextMessage = function(targetId, scene, text, options){
     this.addToSendList({
         targetId: targetId,
@@ -547,6 +570,17 @@ y2wIMBridge.prototype.onImageLoadError = function(){
     this.sendList.splice(0, 1);
     cb();
 }
+/**
+ * 发送文件消息
+ * @param targetId:目标Id
+ * @param scene:会话场景类型
+ * @param file:input.files[0]
+ * @param options:{
+ *  showMsg: showMsg//UI显示消息
+ *  storeMsgFailed: storeMsgFailed//消息保存失败
+ *  storeMsgDone: storeMsgDone//消息保存成功
+ * }
+ */
 y2wIMBridge.prototype.sendFileMessage = function(targetId, scene, file, options){
     this.addToSendList({
         targetId: targetId,

@@ -14,13 +14,21 @@ var UserSessions = function(user){
                 this.updatedAt = userSession.updatedAt;
         }
     }
-
+    /**
+     * 获取群组
+     * @param sessionId:会话Id
+     * @returns userSession
+     */
     this.get = function(sessionId){
         return _list[sessionId];
     }
     this.createUserSession = function(obj){
         return new UserSession(this, obj);
     }
+    /**
+     * 获取群组列表
+     * @returns [userSession]
+     */
     this.getUserSessions = function(){
         var foo = [];
         for(var k in _list){
@@ -64,6 +72,13 @@ userSessionsLocalStorage.prototype.setList = function(list){
 var userSessionsRemote = function(userSessions){
     this.userSessions = userSessions;
 }
+/**
+ * 收藏群组
+ * @param sessionId:会话Id
+ * @param name:群组名称
+ * @param avatarUrl:群组头像
+ * @param cb
+ */
 userSessionsRemote.prototype.add = function(sessionId, name, avatarUrl, cb){
     var that = this;
     cb = cb || nop;
@@ -81,6 +96,11 @@ userSessionsRemote.prototype.add = function(sessionId, name, avatarUrl, cb){
         cb(null, data);
     })
 }
+/**
+ * 取消收藏群组
+ * @param userSessionId:群组id
+ * @param cb
+ */
 userSessionsRemote.prototype.remove = function(userSessionId, cb){
     var that = this;
     cb = cb || nop;
@@ -94,6 +114,10 @@ userSessionsRemote.prototype.remove = function(userSessionId, cb){
         cb(null);
     })
 }
+/**
+ * 同步群组
+ * @param cb
+ */
 userSessionsRemote.prototype.sync = function(cb){
     cb = cb || nop;
     var that = this;
