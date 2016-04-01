@@ -1090,12 +1090,15 @@ width: 40px;
 .u-notice span{
     display: inline;
     padding: 3px 15px;
-    background-color: #e5f4ff;
-    color:#6b8299;
-    font-size: 12px;
-    line-height: 30px;
+    background-color: #bcd6d7;
+    color: #fff;
+    font-size: 13px;
+    line-height: 26px;
     word-wrap: break-word;
     word-break: break-all;
+    border-radius: 30px;
+    -webkit-border-radius: 30px;
+    -moz-border-radius: 30px;
 }
 .u-msgTime{
     color: #d7d7d7;
