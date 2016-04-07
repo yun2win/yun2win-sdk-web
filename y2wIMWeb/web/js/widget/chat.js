@@ -69,6 +69,11 @@ chat.prototype.makeChatContent = function(message){
                 contentDOM += this.getMessage(message);
                 contentDOM += '</div>';
                 break;
+            default:
+                contentDOM = '<div class="msg"><div class="box"><div class="cnt"><div class="default-width">';
+                contentDOM += '未知类型消息，请在移动端开启';
+                contentDOM += '</div></div></div></div>';
+                break;
         }
         msgHtml = ['<div data-time="'+ message.createdAt +'" data-id="'+ message.id +'" class="item item-' + this.buildSender(message) + '">',
             avatarDOM,
