@@ -57,7 +57,7 @@ var register = {
 
 	doRegister: function(email, pwd, name) {
 		var that = this;
-        Users.getInstance().remote.register(email, pwd, name, function(err){
+        Users.getInstance().remote.register(email, pwd, name, function(err,user){
             if(err){
                 that.$errorMsg.html(JSON.parse(err.responseText).message).removeClass('hide');
                 that.$submit.html('注册').removeAttr('disabled');
