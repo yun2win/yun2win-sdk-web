@@ -225,7 +225,7 @@ CurrentUser.prototype.init = function(){
     this.contacts.init();
     this.sessions.init();
     this.userSessions.init();
-}
+};
 CurrentUser.prototype.logout = function(cb){
     try {
         this.y2wIMBridge.disconnect();
@@ -233,7 +233,7 @@ CurrentUser.prototype.logout = function(cb){
     Users.getInstance().localStorage.removeCurrentUserInfo();
     Users.getInstance().localStorage.removeCurrentId();
     cb();
-}
+};
 CurrentUser.prototype.toJSON = function(){
     return {
         id: this.id,
@@ -253,7 +253,7 @@ CurrentUser.prototype.toJSON = function(){
         token: this.token,
         imToken: this.imToken
     }
-}
+};
 
 CurrentUser.prototype.y2wIMInit = function(){
     var that = this;
@@ -264,7 +264,7 @@ CurrentUser.prototype.y2wIMInit = function(){
         }
         that.y2wIMBridge = new y2wIMBridge(that);
     })
-}
+};
 
 var currentUserRemoteSingleton = (function(){
     var _instance;

@@ -35,6 +35,7 @@ var y2w = {
                         console.error(err);
                         return;
                     }
+                    that.autoOpenChatBox();
                 });
         }, 0);
 
@@ -734,6 +735,30 @@ var y2w = {
         }
     },
 
+    autoOpenChatBox:function(){
+        var kvs=(location.href.split("?")[1]||"").split("&");
+        var parms={};
+        for(var i=0;i<kvs.length;i++){
+            var kk=kvs[i].split("=");
+            parms[kk[0]]=kk[1];
+        }
+        var cid=parms.targetId;
+        var type=parms.type;
+        if(!cid)
+            return;
+
+        if(type){
+            this.openChatBox(cid,type);
+            return;
+        }
+
+        var c=currentUser.userConversations.get("group",cid);
+        if(c){
+            this.openChatBox(cid,"group");
+            return;
+        }
+        this.openChatBox(cid,"p2p");
+    },
     /**
      * 点击左边面板，打开聊天框
      */

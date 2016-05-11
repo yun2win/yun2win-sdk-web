@@ -207,7 +207,10 @@ var y2wIMBridge = function(user){
     this.onConnectionStatusChanged = function (status, msg) {
         switch (status) {
             case y2wIM.connectionStatus.connecting:
-                console.log('connecting');
+                if(msg)
+                    console.log('connecting country:' + msg.country + ' zone:' + msg.zone);
+                else
+                    console.log('connecting');
                 break;
             case y2wIM.connectionStatus.connected:
                 console.log('connected');
@@ -339,14 +342,19 @@ var y2wIMBridge = function(user){
     this.connect();
 }
 y2wIMBridge.prototype.connect = function(){
+    var that = this;
     var opts = {
         appKey: this.user.appKey,
         token: this.user.imToken,
         uid: this.user.id.toString(),
+        country: JSON.parse(localStorage.getItem('conn')).country,
         onConnectionStatusChanged: this.onConnectionStatusChanged,
         onMessage: this.onMessage
     };
-    this._client = y2wIM.connect(opts);
+    //this._client = y2wIM.connect(opts);
+    y2wIM.connect(opts, function(client){
+        that._client = client;
+    });
 }
 y2wIMBridge.prototype.disconnect = function(cb){
     cb = cb || nop;

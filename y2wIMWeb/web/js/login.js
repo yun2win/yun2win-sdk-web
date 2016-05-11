@@ -10,6 +10,7 @@ var Login = {
 		this.$email = $('#email');
 		this.$pwd = $('#password');
 		this.$errorMsg = $('#errorMsg');
+        this.$country = $('#country');
 		this.$loginBtn = $('#loginBtn');
 		this.$footer = $('#footer');
 	},
@@ -76,6 +77,11 @@ var Login = {
                 that.$loginBtn.html('登录').removeAttr('disabled');
                 return;
             }
+            var country = that.$country.val() || '';
+            var connInfo = {
+                country: country
+            };
+            localStorage.setItem('conn', JSON.stringify(connInfo));
             window.location.href = '../web/main.html';
         })
 	},
