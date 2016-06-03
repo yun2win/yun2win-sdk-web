@@ -347,7 +347,6 @@ y2wIMBridge.prototype.connect = function(){
         appKey: this.user.appKey,
         token: this.user.imToken,
         uid: this.user.id.toString(),
-        country: JSON.parse(localStorage.getItem('conn')).country,
         onConnectionStatusChanged: this.onConnectionStatusChanged,
         onMessage: this.onMessage
     };
