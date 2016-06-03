@@ -10,7 +10,6 @@ var Login = {
 		this.$email = $('#email');
 		this.$pwd = $('#password');
 		this.$errorMsg = $('#errorMsg');
-        this.$country = $('#country');
 		this.$loginBtn = $('#loginBtn');
 		this.$footer = $('#footer');
 	},
