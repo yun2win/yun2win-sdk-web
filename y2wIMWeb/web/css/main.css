@@ -185,9 +185,7 @@ html, body {
     background-color: #21c0c0;
 }
 .msg-type {
-    position: absolute;
-    top: 5px;
-    left: 12px;
+ margin-left:12px;
 }
 .msg-input {
     font: 14px/1.5 Helvetica, Arial, Tahoma, '微软雅黑';
@@ -1771,6 +1769,28 @@ width: 40px;
 .icon-file:active {
     background: url('../images/file_active.png') no-repeat;
 }
+.icon-groupvideo {
+    width: 32px;
+    height: 32px;
+    background: url('../images/chat_tool_qunvideo.png') no-repeat;
+}
+.icon-groupvideo:hover {
+    background: url('../images/chat_tool_qunvideo_hover.png') no-repeat;
+}
+.icon-groupvideo:active {
+    background: url('../images/chat_tool_qunvideo_active.png') no-repeat;
+}
+.icon-groupaudio {
+    width: 32px;
+    height: 32px;
+    background: url('../images/chat_tool_qunaudio.png') no-repeat;
+}
+.icon-groupaudio:hover {
+    background: url('../images/chat_tool_qunaudio_hover.png') no-repeat;
+}
+.icon-groupaudio:active {
+    background: url('../images/chat_tool_qunaudio_active.png') no-repeat;
+}
 .chat-content{
 
 }
@@ -2035,3 +2055,100 @@ width: 40px;
     width: 56px;
     height: 56px;
 }
+/*-------------------接收音视频弹窗-------------------*/
+.callvideo_bg{
+    background:#fff;
+    position:absolute;
+    right:0;bottom:0;
+    width:360px;
+    height:294px;
+    border-radius:6px;
+    z-index:1000;
+}
+.callvideo_title_bg{
+    width:100%;
+    height:40px;
+}
+.callvideo_title_text{
+    line-height:40px;
+    padding-left:10px;
+    font-size:15px;
+    color:#5a5a5a;
+    font-weight:bold;
+}
+.callvideo_title_img{
+   background:url(../images/video_close.png);
+   float:right;
+   padding: 8px;
+    margin-right: 10px;
+    margin-top: 10px;
+    cursor:pointer;
+}
+.callvideo_title_img:hover{
+   background:url(../images/video_close.png);
+}
+.callvideo_content_bg{
+    width: 100%; 
+    height: 254px; 
+    background: url(../images/callVideo_bg.png); 
+}
+.callvideo_content_userimg{
+    border: 10px solid rgba(255,255,255,0.2); 
+    border-radius: 50%;
+     margin-bottom: 5px; 
+     margin-left:125px;
+     margin-top:20px;
+     width: 110px; 
+     height: 100px;
+}
+.callvideo_content_username{
+    font-weight:bold;
+    color:#ffffff;
+    font-size:20px;
+    width:100%;
+    height:24px;
+    text-align:center;
+    padding-left:10px;
+}
+.callvideo_content_userinfo{
+    color:#ffffff;
+    font-size:14px;
+    width:100%;
+    height:20px;
+    text-align:center;
+    margin-top:5px;
+    padding-left:10px
+}
+.callvideo_buttom_handup{
+    float:left;
+    width:70px;
+    height:28px;
+    margin-left:100px;
+    border-radius:14px;
+    background:url(../images/call_handup.png);
+    margin-top:15px;
+    cursor:pointer;
+}
+.callvideo_buttom_handup:active{
+    background:url(../images/call_handuped.png);
+}
+.callvideo_buttom_call{
+    float:right;
+    width:70px;
+    height:28px;
+    margin-right:100px;
+    border-radius:14px;
+     background:url(../images/call_call.png);
+    margin-top:15px;
+    cursor:pointer;
+}
+.callvideo_buttom_call:active{
+  background:url(../images/call_called.png);
+}
+.callvideo_buttom_text{
+    color:#ffffff;
+    font-size:13px;
+    line-height:28px;
+    padding-left:33px;
+}
+/*-------------------结束-------------------*/

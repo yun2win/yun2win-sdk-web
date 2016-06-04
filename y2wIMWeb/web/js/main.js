@@ -637,6 +637,20 @@ var y2w = {
             this.$chatContent.find('.no-msg').remove();
         }
     },
+    //发送邀请加入音视频通知
+    sendVideoMessage: function (type, receiverIds, mode, channelId) {
+
+        var scene = this.$chatEditor.data('type'),
+         to = this.$chatEditor.data('to');
+        var content = {
+            senderId: currentUser.id,
+            receiversIds: receiverIds,
+            avcalltype: mode,
+            channelId: channelId,
+            sessionId: currentUser.currentSession.id
+        };
+        currentUser.y2wIMBridge.sendcallVideoMessage(to, scene, content);
+    },
     sendFileMessage: function(){
         var scene = this.$chatEditor.data('type'),
             to = this.$chatEditor.data('to'),
@@ -832,6 +846,16 @@ var y2w = {
             }
             this.$chatName.text(text);
             this.$chatTitle.find('img').attr('src', avatarUrl);
+            //$('#j-videoType').addClass('hide');
+            //$('#j-audioType').addClass('hide');
+            $("#j-videoType").off("click");
+            $("#j-videoType").on("click", function () {
+                y2w.chatInfo.callGroupMembers(scene, 'video', account);
+            });
+            $("#j-audioType").off("click");
+            $("#j-audioType").on("click", function () {
+                y2w.chatInfo.callGroupMembers(scene, 'audio', account);
+            });
         }else{
             if(info){
                 this.$chatName.text(info.getName());
@@ -842,6 +866,16 @@ var y2w = {
                 this.$chatTitle.find('img').attr('src', "images/normal.png"); 
                 this.$chatName.text(info.name);
             }
+            //$('#j-videoType').removeClass('hide');
+            //$('#j-audioType').removeClass('hide');
+            $("#j-videoType").off("click");
+            $("#j-videoType").on("click", function () {
+                y2w.chatInfo.callGroupMembers(scene,'video',null);
+            });
+            $("#j-audioType").off("click");
+            $("#j-audioType").on("click", function () {
+                y2w.chatInfo.callGroupMembers(scene,'audio',null);
+            });
         }
         //显示面板
         this.$rightPanel.find('.chat-box').removeClass('hide');
@@ -973,7 +1007,7 @@ var y2w = {
 
     logout: function () {
         currentUser.logout(function(){
-            window.location.href = '../web/index.html';
+            window.location.href = '../yun2win/index.html';
         })
     },
 
@@ -1012,6 +1046,56 @@ var y2w = {
                 that.tab.contactPanel.render();
             cb();
         });
+    },
+    //接收音视频通知处理
+    receive_AV_Mesage: function (syncObj) {
+        var content = syncObj.content;
+        var senderId = content.senderId;
+        var avcalltype= content.avcalltype;
+        var channelId = content.channelId;
+        var comtext;
+        if (avcalltype == 'video') {
+            comtext = '视频通话';
+        } else {
+            comtext = '音频通话';
+        }
+        if (syncObj.type == "groupavcall") {
+            var sessionId = content.sessionId;
+            //var sendername = currentUser.userSessions.get(sessionId).members.getMember(senderId).name;
+
+            var usersessions = currentUser.sessions;
+            var usersesion = usersessions.getById(sessionId);
+            var members = usersesion.members;
+            var member = members.getMember(senderId);
+            var sendername = member.name;
+            $('.callvideo_bg').removeClass('hide');
+            $('#callvideo_title_text')[0].innerText = comtext + '邀请';
+            $('#callvideo_content_username')[0].innerText = sendername;
+            $('#callvideo_content_userimg')[0].src = member.user.avatarUrl;
+            comtext = '邀请您参与群组' + comtext;
+            $('#callvideo_content_userinfo')[0].innerText = comtext;
+        } else if (syncObj.type == "singleavcall") {
+            var sender = currentUser.contacts.get(senderId);
+            var sendername = sender.name;
+            $('.callvideo_bg').removeClass('hide');
+            $('#callvideo_title_text')[0].innerText = comtext + '邀请';
+            $('#callvideo_content_username')[0].innerText = sendername;
+            $('#callvideo_content_userimg')[0].src = sender.avatarUrl;
+
+            comtext = '邀请您参与' + comtext;
+            $('#callvideo_content_userinfo')[0].innerText = comtext;
+        }
+        $("#callvideo_title_img").on("click", function () {
+            $('.callvideo_bg').addClass('hide');
+        });
+        $("#callvideo_buttom_handup").on("click", function () {
+            $('.callvideo_bg').addClass('hide');
+        });
+        $("#callvideo_buttom_call").on("click", function () {
+            $('.callvideo_bg').addClass('hide');
+            window.open("../yun2win/videoAudio.html?userid=" + currentUser.id + "&channelId=" + channelId + "&type=" + avcalltype, "_blank");
+        });
     }
+
 };
 y2w.init();

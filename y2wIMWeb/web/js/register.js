@@ -57,14 +57,14 @@ var register = {
 
 	doRegister: function(email, pwd, name) {
 		var that = this;
-        Users.getInstance().remote.register(email, pwd, name, function(err,user){
+        Users.getInstance().remote.register(email, pwd, name, function(err){
             if(err){
                 that.$errorMsg.html(JSON.parse(err.responseText).message).removeClass('hide');
                 that.$submit.html('注册').removeAttr('disabled');
                 return;
             }
             alert("注册成功");
-            window.location.href = '../web/index.html';
+            window.location.href = '../yun2win/index.html';
         });
 	}
 };
