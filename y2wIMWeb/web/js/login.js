@@ -76,7 +76,7 @@ var Login = {
                 that.$loginBtn.html('登录').removeAttr('disabled');
                 return;
             }
-            window.location.href = '../yun2win/main.html';
+            window.location.href = '../web/main.html';
         })
 	},
 
