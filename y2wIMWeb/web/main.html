@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8" />
@@ -100,6 +100,12 @@
 						<span class="msg-type" id="j-msgType">
 							<a href="javascript:;" class="icon icon-file" data-type="file"></a>
 						</span>
+                        <span class="msg-type" id="j-videoType">
+                            <a href="javascript:;" class="icon icon-groupvideo"></a>
+                        </span>
+                        <span class="msg-type" id="j-audioType">
+                            <a href="javascript:;" class="icon icon-groupaudio"></a>
+                        </span>
 						<form action="#" id="j-uploadForm">
 							<input multiple="multiple" type="file" accept="image/*" name="file" id="j-uploadFile" class="hide"/>
 						</form>
@@ -110,6 +116,30 @@
 			</div>
 		</div>
 	</div>
+
+    <div class="callvideo_bg hide">
+        <div class="callvideo_title_bg">
+            <span class="callvideo_title_text" id="callvideo_title_text">视频通话邀请</span>
+            <img class="callvideo_title_img" id="callvideo_title_img" />
+        </div>
+        <div class="callvideo_content_bg">
+            <div>
+                <img id="callvideo_content_userimg" class="callvideo_content_userimg" onerror="javascript: this.src = 'images/contact_avatar.png'" />
+            </div>
+            <div class="callvideo_content_username" id="callvideo_content_username">
+                <span></span>
+            </div>
+            <div class="callvideo_content_userinfo" id="callvideo_content_userinfo">
+                <span></span>
+            </div>
+            <div class="callvideo_buttom_handup" id="callvideo_buttom_handup">
+                <span class="callvideo_buttom_text">挂断</span>
+            </div>
+            <div class="callvideo_buttom_call" id="callvideo_buttom_call">
+                <span class="callvideo_buttom_text">接听</span>
+            </div>
+        </div>
+    </div>
     <div class="main-footer tc">
         <p>Copyright &copy;2016 liyueyun.com</p>
     </div>
@@ -213,6 +243,7 @@
     <script src="js/core/session.js?v=0.1"></script>
     <script src="js/core/attachment.js?v=0.1"></script>
     <script src="js/core/y2wIMSDK.min.js"></script>
+    <script src="js/core/y2wVideo.js?v=0.1"></script>
     <script src="js/widget/y2wIMBridge.js"></script>
     <script src="js/widget/tab.js?v=0.1"></script>
     <script src="js/widget/chooseAvatar.js?v=0.1"></script>

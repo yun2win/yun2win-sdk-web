@@ -9,7 +9,9 @@ var y2wIMBridge = function(user){
     this.sendList = [];
     this.sendTypes = {
         text: 0,
-        file: 1
+        file: 1,
+        singleavcall: 2,//单人 音视频 
+        groupacall: 3//多人音视频
     }
 
     this.syncTypes = {
@@ -325,6 +327,18 @@ var y2wIMBridge = function(user){
         if(obj.cmd == 'sendMessage'){
             for(var i = 0; i < message.syncs.length; i++){
                 var syncObj = message.syncs[i];
+                if (syncObj.type == "groupavcall" || syncObj.type == "singleavcall") {
+                    var receiversIds = syncObj.content.receiversIds;
+                    if (receiversIds) {
+                        for (var j = 0; j < receiversIds.length; j++) {
+                            if (receiversIds[j] == currentUser.id) {
+                                y2w.receive_AV_Mesage(syncObj);
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                }
                 var status = that.getSyncStatus(syncObj);
                 switch (status){
                     case that.syncStatus.none:
@@ -415,6 +429,18 @@ y2wIMBridge.prototype.handleSendMessage = function(){
                         that.handleSendMessage();
                 })
                 break;
+            case this.sendTypes.singleavcall:
+                this.handleSendCallMessage(sendObj, function () {
+                    if (that.sendList.length > 0)
+                        that.handleSendMessage();
+                })
+                break;
+            case this.sendTypes.groupacall:
+                this.handleSendCallMessage(sendObj, function () {
+                    if (that.sendList.length > 0)
+                        that.handleSendMessage();
+                })
+                break;
             default :
                 break;
         }
@@ -467,6 +493,31 @@ y2wIMBridge.prototype.handleSendTextMessage = function(sendObj, cb){
         })
     });
 }
+y2wIMBridge.prototype.handleSendCallMessage = function (sendObj, cb) {
+    var targetId = sendObj.targetId,
+       scene = sendObj.scene,
+       text = sendObj.content,
+       that = this;
+    var msgtype;
+    if (scene === 'p2p') {
+        msgtype = "singleavcall";
+    } else {
+        msgtype = "groupavcall";
+    }
+    this.user.sessions.get(targetId, scene, function (err, session) {
+        //发送通知
+        var imSession = that.transToIMSession(session);
+        var syncs = [
+                { type: that.syncTypes.userConversation },
+                { type: that.syncTypes.message, sessionId: imSession.id },
+                 { type: msgtype, content: text }
+        ]
+        that.sendMessage(imSession, syncs);
+        that.sendList.splice(0, 1);
+        cb();
+    });
+}
+
 y2wIMBridge.prototype.handleSendFileMessage = function(sendObj, cb){
     var targetId = sendObj.targetId,
         scene = sendObj.scene,
@@ -597,4 +648,18 @@ y2wIMBridge.prototype.sendFileMessage = function(targetId, scene, file, options)
         type: this.sendTypes.file
     });
 }
+y2wIMBridge.prototype.sendcallVideoMessage = function (targetId, scene, content) {
+    var sendType;
+    if (scene === 'p2p') {
+        sendType = this.sendTypes.singleavcall;
+    } else {
+        sendType = this.sendTypes.groupacall;
+    }
 
+    this.addToSendList({
+        targetId: targetId,
+        scene: scene,
+        content: content,
+        type: sendType
+    });
+}

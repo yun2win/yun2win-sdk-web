@@ -8,8 +8,8 @@ var selector = function(){
     this.$tabs = $('<div class="tabs" id="selectorTabs"></div>').appendTo(this.$selector);
     this.$ok = $('<button class="btn btn-cancel radius4px j-chat chat hide">确定</button>').appendTo(this.$selector);
     this.$mask = $('#mask');
-    this.tabType = { contact: 0, group: 1 };
-    this.tabText = { 0: '选择联系人', 1: '选择群组'};
+    this.tabType = { contact: 0, group: 1,groupmembers:2 };
+    this.tabText = { 0: '选择联系人', 1: '选择群组',2:'选择群成员'};
     this.selection = { single: 0, multiple: 1 };
 
     this.$close.on('click', this.close.bind(this));
@@ -64,6 +64,8 @@ selector.prototype.switchTab = function(tab){
         this.renderContact(tab);
     } else if (tab.type === this.tabType.group) {
         this.renderGroup(tab);
+    } else if (tab.type === this.tabType.groupmembers) {
+        this.renderGroupMembers(tab);
     }
 }
 selector.prototype.renderContact = function(tab) {
@@ -72,6 +74,10 @@ selector.prototype.renderContact = function(tab) {
 }
 selector.prototype.renderGroup = function(tab){
     var list = currentUser.userConversations.getUserConversations('group');
+    this.buildList(tab, list);
+}
+selector.prototype.renderGroupMembers = function (tab) {
+    var list =currentUser.currentSession.members.session.members.getMembers();
     this.buildList(tab, list);
 }
 selector.prototype.buildList = function(tab, list){
@@ -84,7 +90,7 @@ selector.prototype.buildList = function(tab, list){
         var dataId;
         if(tab.type == this.tabType.group)
             dataId = list[i].targetId;
-        else if(tab.type == this.tabType.contact)
+        else if (tab.type == this.tabType.contact || tab.type == this.tabType.groupmembers)
             dataId = list[i].userId;
         else{
             throw 'selector build list error, tab type is invalid';
@@ -105,11 +111,12 @@ selector.prototype.buildList = function(tab, list){
             avatarDOM += ' avatar-random-bg-' + index % avatarRandomBGColorCount + '"><img src="' + imageUrl + '"/>';
         }
         avatarDOM += '</span>';
+        var name = this.tabType.groupmembers ? list[i].name : list[i].getName();
         html += ['<li class="list-item" tab-type="' + tab.type + '" data-id="' + dataId + '">',
             tab.selection == this.selection.multiple ? '<div class="opt"><i class="unchecked' + (checked ? ' checked' : '') + '"/></div>' : '',
             avatarDOM,
             '<div class="info">',
-            '<h4 class="name">' + list[i].getName() + '</h4>',
+            '<h4 class="name">' + name + '</h4>',
             '</div>',
             '</li>'].join("");
     }

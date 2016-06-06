@@ -315,6 +315,30 @@ chatInfo.prototype.gotoAddChatMembers = function(obj){
         })
     })
 }
+/**
+ * 邀请加入群聊 
+ * @param obj
+ */
+chatInfo.prototype.addgroup_Members = function (scene,obj,mode) {
+    var y2wVideo = new RTCManager();
+    y2wVideo.createVideo(currentUser.id, currentUser.imToken, function (error, channelId) {
+        if (error) {
+            return;
+        }
+        var receiverIds=[];
+        if (scene === 'p2p') {
+            receiverIds[receiverIds.length] = obj;
+        }else{
+            for (var i = 0; i < obj.selected.length; i++) {
+                receiverIds[receiverIds.length] = obj.selected[i].id;
+            }
+        }
+        //发送通知
+        y2w.sendVideoMessage(scene, receiverIds, mode, channelId);
+        window.open("../yun2win/videoAudio.html?userid=" + currentUser.id + "&channelId=" + channelId + "&type=" + mode, "_blank");
+    });
+}
+
 chatInfo.prototype.addChatMembers = function(){
     this.toggleChatInfo();
     var that = this;
@@ -379,6 +403,39 @@ chatInfo.prototype.addChatMembers = function(){
         }
     }
     y2w.selector.show(selectorConf);
+}
+chatInfo.prototype.callGroupMembers = function (scene, mode,userid) {
+    var that = this;
+    if (scene === 'p2p') {
+        that.addgroup_Members(scene, userid, mode);
+    }else{
+    var selected = {},
+        hidden = {},
+        selectorConf = {};
+    //var members = currentUser.currentSession.members.session.members.getMembers();
+    //var mycontacts = currentUser.currentSession.members.getMembers();
+    //for (var i = 0; i < members.length; i++) {
+    //    if (members[i].user.id != currentUser.id) {
+    //            hidden[members[i].user.id] = true;
+    //    }
+    //}
+    hidden[currentUser.id] = true;
+    selectorConf = {
+        title: '添加群聊成员',
+        tabs: [
+            {
+                type: y2w.selector.tabType.groupmembers,
+                selection: y2w.selector.selection.multiple,
+                hidden: hidden,
+                selected: selected
+            }
+        ],
+        onSelected: function (obj) {
+            that.addgroup_Members(scene,obj, mode);
+        }
+    }
+    y2w.selector.show(selectorConf);
+    }
 }
 chatInfo.prototype.gotoRemoveChatMembers = function(userId){
     //var that = this;
