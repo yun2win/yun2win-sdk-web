@@ -64,7 +64,7 @@ var register = {
                 return;
             }
             alert("注册成功");
-            window.location.href = '../yun2win/index.html';
+            window.location.href = '../web/index.html';
         });
 	}
 };

@@ -335,7 +335,7 @@ chatInfo.prototype.addgroup_Members = function (scene,obj,mode) {
         }
         //发送通知
         y2w.sendVideoMessage(scene, receiverIds, mode, channelId);
-        window.open("../yun2win/videoAudio.html?userid=" + currentUser.id + "&channelId=" + channelId + "&type=" + mode, "_blank");
+        window.open("../web/videoAudio.html?userid=" + currentUser.id + "&channelId=" + channelId + "&type=" + mode, "_blank");
     });
 }
 

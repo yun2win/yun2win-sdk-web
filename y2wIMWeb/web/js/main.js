@@ -1007,7 +1007,7 @@ var y2w = {
 
     logout: function () {
         currentUser.logout(function(){
-            window.location.href = '../yun2win/index.html';
+            window.location.href = '../web/index.html';
         })
     },
 
@@ -1093,7 +1093,7 @@ var y2w = {
         });
         $("#callvideo_buttom_call").on("click", function () {
             $('.callvideo_bg').addClass('hide');
-            window.open("../yun2win/videoAudio.html?userid=" + currentUser.id + "&channelId=" + channelId + "&type=" + avcalltype, "_blank");
+            window.open("../web/videoAudio.html?userid=" + currentUser.id + "&channelId=" + channelId + "&type=" + avcalltype, "_blank");
         });
     }
 

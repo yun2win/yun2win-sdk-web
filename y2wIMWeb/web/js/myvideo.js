@@ -16,7 +16,7 @@
    var currentuserinfo = JSON.parse(localStorage.getItem(currentUserid));
    if (currentuserinfo == null) {
        if (window.confirm("您还没有登录，请先登录")) {
-           window.location.href = '../yun2win/index.html';
+           window.location.href = '../web/index.html';
        }
        return;
       //重新登录
@@ -57,7 +57,7 @@
        error: function (e) {//验证失败，重新登陆
            if (e.status ==400){
            if (window.confirm("验证失败，请重新登录")) {
-               window.location.href = '../yun2win/index.html';
+               window.location.href = '../web/index.html';
            }
            }
        }
