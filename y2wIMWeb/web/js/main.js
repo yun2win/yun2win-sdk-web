@@ -1085,6 +1085,9 @@ var y2w = {
             comtext = '邀请您参与' + comtext;
             $('#callvideo_content_userinfo')[0].innerText = comtext;
         }
+        $("#callvideo_title_img").off("click");
+        $("#callvideo_buttom_handup").off("click");
+        $("#callvideo_buttom_call").off("click");
         $("#callvideo_title_img").on("click", function () {
             $('.callvideo_bg').addClass('hide');
         });
@@ -1093,7 +1096,7 @@ var y2w = {
         });
         $("#callvideo_buttom_call").on("click", function () {
             $('.callvideo_bg').addClass('hide');
-            window.open("../web/videoAudio.html?userid=" + currentUser.id + "&channelId=" + channelId + "&type=" + avcalltype, "_blank");
+            window.open("../yun2win/videoAudio.html?userid=" + currentUser.id + "&channelId=" + channelId + "&type=" + avcalltype, "_blank");
         });
     }
 

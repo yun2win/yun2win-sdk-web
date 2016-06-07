@@ -8,7 +8,7 @@
         $.ajax({
             url: channel_url + "v1/meetrooms/room",
             type: 'POST',
-            data: { userId: myuserID, deviceType: "Web" },
+            data: { userId: myuser.Id, deviceType: "Web"},//loginAera:"JP"
             dataType: 'json',
             beforeSend: function (req) {
                 if (token)
