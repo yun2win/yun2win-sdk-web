@@ -26,7 +26,7 @@ Yun2win为企业和开发者提供最安全的即时通讯(IM)云服务和基于
 IM开发文档
 http://console.yun2win.com/docs/web/Y2W_IM/web.html
 
-融合通信开发文档
+融合通讯开发文档
 http://console.yun2win.com/docs/android/Y2W_RTC/index.html
 
 ### 链接
