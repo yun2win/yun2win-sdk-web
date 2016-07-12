@@ -27,7 +27,7 @@ IM开发文档
 http://console.yun2win.com/docs/web/Y2W_IM/web.html
 
 融合通讯开发文档
-http://console.yun2win.com/docs/android/Y2W_RTC/index.html
+http://console.yun2win.com/docs/web/Y2W_RTC/index.html
 
 ### 链接
 官方网站 : http://www.yun2win.com<br>
