@@ -8,6 +8,7 @@ var Messages = function(session){
     this.topDate = globalMaxDate;
     this.sessionUpdatedAt = globalMinDate;
     this.remote = new messagesRemote(this);
+    this._dic = {};
 }
 /**
  * 获取消息数量
@@ -23,6 +24,9 @@ Messages.prototype.count = function(){
 Messages.prototype.getMessages = function(){
     return this._list;
 }
+Messages.prototype.exist = function(id){
+    return this._dic[id];
+}
 /**
  * 创建消息对象
  * @param obj
@@ -32,9 +36,13 @@ Messages.prototype.createMessage = function(obj){
     return new Message(this, obj);
 }
 Messages.prototype.add = function(message){
+    if(!this._dic[message.id])
+        this._dic[message.id] = message;
     this._list.push(message);
 }
 Messages.prototype.insert = function(index, message){
+    if(!this._dic[message.id])
+        this._dic[message.id] = message;
     this._list.splice(index, 0, message);
 }
 var messagesRemote = function(messages) {
@@ -106,6 +114,8 @@ messagesRemote.prototype.sync = function(cb) {
             var list = [];
             for (var i = 0; i < data.entries.length; i++) {
                 var message = that.messages.createMessage(data.entries[i]);
+                if(that.messages.exist(message.id))
+                    continue;
                 that.messages.insert(insertIndex++, message);
                 list.push(message);
                 if (that.messages.updatedAt < message.updatedAt)
