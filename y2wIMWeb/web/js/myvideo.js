@@ -52,7 +52,10 @@
        success: function (data) {
            var token = data.access_token;
            //document.getElementById("iframe_videoaudio").src = "https://av-api.liyueyun.com/media/?userid=" + memberId + "&channelId=" + channelId + "&type=" + initype + "&token=" + token + "&avatarUrl=" + avatarUrl + "&name=" + name +"&url="+encodeURIComponent(location.href.replace("videoAudio.html","av.html"));
-           document.getElementById("iframe_videoaudio").src = "https://av-api.liyueyun.com/media/?userid=" + memberId + "&channelId=" + channelId + "&type=" + initype + "&token=" + token + "&avatarUrl=" + avatarUrl + "&name=" + name;
+           name = escape(name);
+           //document.getElementById("iframe_videoaudio").src = "https://av-api.liyueyun.com/media/?userid=" + memberId + "&channelId=" + channelId + "&type=" + initype + "&token=" + token + "&avatarUrl=" + avatarUrl + "&name=" + name;
+           document.getElementById("iframe_videoaudio").src = "media?userid=" + memberId + "&channelId=" + channelId + "&type=" + initype + "&token=" + token + "&avatarUrl=" + avatarUrl + "&name=" + name;
+
        },
        error: function (e) {//验证失败，重新登陆
            if (e.status ==400){
