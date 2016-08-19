@@ -85,7 +85,8 @@ tab.prototype.renderLastMessage = function(msg){
             text += '[图片]';
             break;
         case 'file':
-            if (!/exe|bat/i.test(msg.file.ext)) {
+            msg.file=msg.file||{};
+            if (!/exe|bat/i.test(msg.file.ext||"")) {
                 text += '[文件]';
             } else {
                 text += '[非法文件，已被本站拦截]';

@@ -530,7 +530,11 @@ y2wIMBridge.prototype.handleSendFileMessage = function(sendObj, cb){
         fileReader.onerror = this.onImageLoadError.bind(this, cb)
     }
     else{
-        throw 'format is invalid';
+        //throw 'format is invalid';
+        var fileReader = new FileReader();
+        fileReader.readAsDataURL(file);
+        fileReader.onload = this.onFileLoadSuccess.bind(this, targetId, scene, options,file.name,file.size, cb);
+        fileReader.onerror = this.onFileLoadError.bind(this, cb)
     }
 }
 
@@ -623,11 +627,83 @@ y2wIMBridge.prototype.onImageLoadSuccess = function(targetId, scene, options, cb
             })
         });
     })
-}
+};
 y2wIMBridge.prototype.onImageLoadError = function(){
     this.sendList.splice(0, 1);
     cb();
-}
+};
+y2wIMBridge.prototype.onFileLoadSuccess = function(targetId, scene, options,name,fileSize, cb, e){
+    var that = this;
+    options = options || nop;
+
+    that.user.sessions.get(targetId, scene, function (err, session) {
+        //创建消息对象
+        var message = session.messages.createMessage({
+            sender: that.user.id,
+            to: targetId,
+            type: 'file',
+            content: { base64: e.target.result, name: name, size: fileSize },
+            status: 'storing'
+        });
+
+        session.messages.add(message);
+        var id = message.id;
+        //显示消息
+        if(options.showMsg)
+            options.showMsg(message);
+        //上传图片
+        var fileName = guid() + '.png';
+        that.user.attchments.uploadBase64(fileName,"application/octet-stream", e.target.result, function(err, data) {
+            if (err) {
+                console.error(err);
+                if (options.storeMsgFailed)
+                    options.storeMsgFailed(id);
+                currentUser.y2wIMBridge.sendList.splice(0, 1);
+                cb();
+                return;
+            }
+            var src = 'attachments/' + data.id + '/content';
+            //保存消息对象
+            message.content.src = src;
+            //message.content.thumbnail = src;
+            delete message.content.base64;
+            session.messages.remote.store(message, function (err, msg) {
+                if (err) {
+                    console.error(err);
+                    if (options.storeMsgFailed)
+                        options.storeMsgFailed(id);
+                    currentUser.y2wIMBridge.sendList.splice(0, 1);
+                    cb();
+                    return;
+                }
+
+                //发送通知
+                var imSession = that.transToIMSession(session);
+                var syncs = [
+                    { type: that.syncTypes.userConversation },
+                    { type: that.syncTypes.message, sessionId: imSession.id }
+                ]
+                that.sendMessage(imSession, syncs);
+
+                if (options.storeMsgDone)
+                    options.storeMsgDone(id, session.type, targetId, msg);
+
+                currentUser.y2wIMBridge.sendList.splice(0, 1);
+
+                //message.content=msg.content;
+                if(options.updateMsg)
+                    options.updateMsg(message);
+
+                cb();
+            })
+        })
+    });
+
+};
+y2wIMBridge.prototype.onFileLoadError = function(){
+    this.sendList.splice(0, 1);
+    cb();
+};
 /**
  * 发送文件消息
  * @param targetId:目标Id

@@ -69,6 +69,11 @@ chat.prototype.makeChatContent = function(message){
                 contentDOM += this.getMessage(message);
                 contentDOM += '</div>';
                 break;
+            case 'file':
+                contentDOM = '<div class="msg"><div class="box"><div class="cnt"><div class="default-width">';
+                contentDOM += this.getMessage(message);
+                contentDOM += '</div></div></div></div>';
+                break;
             default:
                 contentDOM = '<div class="msg"><div class="box"><div class="cnt"><div class="default-width">';
                 contentDOM += '未知类型消息，请在移动端开启';
@@ -126,7 +131,7 @@ chat.prototype.getMessage = function(msg) {
         case 'image':
             var src;
             if(msg.content.base64 == undefined)
-                src = config.baseUrl + msg.content.src + '?access_token=' + currentUser.token;
+                src = parseAttachmentUrl(msg.content.src,currentUser.token);//config.baseUrl + msg.content.src + '?access_token=' + currentUser.token;
             else
                 src = msg.content.base64;
             var maxWidth = 290;
@@ -154,19 +159,71 @@ chat.prototype.getMessage = function(msg) {
             //}
             break;
         case 'file':
-            if(msg.status === -1){
-                str = '<p>['+msg.message.message+']</p>';
-            }else{
-                if (/png|jpg|bmp|jpeg|gif/i.test(msg.file.ext)) {
-                    msg.file.url = _$escape(msg.file.url);
-                    str = '<a class="f-maxWid" href="' + msg.file.url + '?imageView" target="_blank"><img data-src="' + msg.file.url + '" src="' + msg.file.url + '?imageView&thumbnail=200x0&quality=85"/></a>';
-                } else if (!/exe|bat/i.test(msg.file.ext)) {
-                    url += msg.file ? '?download=' + encodeURI(_$escape(msg.file.name)): '';
-                    str = '<a href="' + url + '" target="_blank" class="download-file f-maxWid"><span class="icon icon-file2"></span>' +_$escape(msg.file.name) + '</a>';
-                } else {
-                    str = '<p>[非法文件，已被本站拦截]</p>';
-                }
+            var src = parseAttachmentUrl(msg.content.src,currentUser.token,msg.content.name);//config.baseUrl + msg.content.src + '/'+msg.content.name+'?access_token=' + currentUser.token;
+
+            var ext="";
+            var name=msg.content.name||"";
+            var index =name.lastIndexOf(".");
+            if(index>=0)
+                ext=name.substr(index+1);
+            ext=ext.toLowerCase();
+
+            var icon="";
+            switch(ext){
+                case "apk":icon="message_file_apk.png";break;
+                case "txt":icon="message_file_txt.png";break;
+                case "pdf":icon="message_file_pdf.png";break;
+                case "ppt":
+                case "pptx":icon="message_file_ppt.png";break;
+                case "xls":
+                case "xlsx":icon="message_file_xls.png";break;
+                case "doc":
+                case "docx":icon="message_file_doc.png";break;
+                case "7z":
+                case "zip":
+                case "rar":icon="message_file_zip.png";break;
+                case "jpg":
+                case "jpeg":
+                case "png":
+                case "bmp":
+                case "gif":
+                case "tip":icon="message_file_pic.png";break;
+                case "audio":
+                case "mp3":
+                case "wma":
+                case "wav":
+                case "ogg":
+                case "m4a":
+                case "mid":
+                case "xmf":
+                case "amr":
+                case "aac":icon="message_file_audio.png";break;
+                case "video":
+                case "wmv":
+                case "3gp":
+                case "mp4":
+                case "rmvb":
+                case "avi":icon="message_file_video.png";break;
+                default: icon="message_file_unknow.png";break;
             }
+
+            var capacity=Util.parseCapacity(msg.content.size);
+
+            str='<a class="download-file" href="'+src+'" f-maxWid><img src="images/'+icon+'"/><span class="ftitle">'+msg.content.name+'</span><span class="fremark">'+capacity+'</span></a>';
+
+            //if(msg.status === -1){
+            //    str = '<p>['+msg.message.message+']</p>';
+            //}else{
+            //    if (/png|jpg|bmp|jpeg|gif/i.test(msg.file.ext)) {
+            //        msg.file.url = _$escape(msg.file.url);
+            //        str = '<a class="f-maxWid" href="' + msg.file.url + '?imageView" target="_blank"><img data-src="' + msg.file.url + '" src="' + msg.file.url + '?imageView&thumbnail=200x0&quality=85"/></a>';
+            //    } else if (!/exe|bat/i.test(msg.file.ext)) {
+            //        url += msg.file ? '?download=' + encodeURI(_$escape(msg.file.name)): '';
+            //        str = '<a href="' + url + '" target="_blank" class="download-file f-maxWid"><span class="icon icon-file2"></span>' +_$escape(msg.file.name) + '</a>';
+            //    } else {
+            //        str = '<p>[非法文件，已被本站拦截]</p>';
+            //    }
+            //}
             break;
         case 'video':
             // str = '<a href="' + url + '" target="_blank" class="download-file"><span class="icon icon-file2"></span>[你收到了一条视频消息]</a>';

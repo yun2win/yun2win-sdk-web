@@ -1493,6 +1493,49 @@ baseRequest.uploadBase64Image = function(url, fileName, imageData, token, cb){
         }
     }
 }
+baseRequest.uploadBase64 = function(url, type, fileName, imageData, token, cb){
+    if(!cb)
+        cb = nop;
+    var boundaryKey = Math.random().toString(16);
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", config.baseUrl + url);// + '?fileName=' + fileName);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    xhr.overrideMimeType("application/octet-stream");
+    xhr.setRequestHeader('Content-Type', 'multipart/form-data; boundary='+boundaryKey+'');
+    var data_0 = '--' + boundaryKey + '\r\n';
+    data_0 += 'Content-Type: '+type+'\r\n';
+    data_0 += 'Content-Disposition: form-data; name="pic"; filename="' + fileName + '"\r\n';
+    data_0 += 'Content-Transfer-Encoding: binary\r\n\r\n';
+    var bytes0 = transTextToBytes(data_0);
+    var bytes1 = transBase64ToBytes(imageData);
+    var data_2  = '\r\n--' + boundaryKey + '--';
+    var bytes2 = transTextToBytes(data_2);
+
+    var bytes = new Uint8Array(bytes0.length + bytes1.length + bytes2.length);
+    for (var i = 0; i < bytes0.length; i++)
+        bytes[i] = bytes0[i];
+    for (var i = 0; i < bytes1.length; i++)
+        bytes[bytes0.length + i] = bytes1[i];
+    for (var i = 0; i < bytes2.length; i++)
+        bytes[bytes0.length + bytes1.length + i] = bytes2[i];
+
+    xhr.send(bytes.buffer);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4) {
+            if (xhr.status == 200) {
+                cb(null, JSON.parse(xhr.responseText));
+            }
+            else if(xhr.status == 401){
+                alert('您登录的信息已过期,请重新登录!');
+                y2w.logout();
+                return;
+            }
+            else{
+                cb(xhr.responseText);
+            }
+        }
+    }
+}
 
 function transTextToBytes(text){
     var data = new ArrayBuffer(text.length);

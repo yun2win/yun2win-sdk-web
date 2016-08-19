@@ -84,10 +84,17 @@ html, body {
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
+
 .item-you .download-file {
     display: block;
     color:#666;
 }
+.download-file img{ width:64px !important;height:64px; border-radius: 8px; float:left; margin-right: 10px;}
+.download-file .ftitle{line-height: 30px; display: block;height:30px; overflow: hidden; min-width:100px; }
+.download-file .fremark{ display: block; line-height: 30px; font-size:12px; }
+.item-you .download-file img{  float:right;  margin-left: 10px;}
+
+
 /*.msg:before {*/
     /*content:' ';*/
     /*position: absolute;*/
