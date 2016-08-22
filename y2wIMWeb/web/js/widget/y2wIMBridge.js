@@ -640,6 +640,23 @@ y2wIMBridge.prototype.onImageLoadError = function(){
     this.sendList.splice(0, 1);
     cb();
 };
+<<<<<<< Updated upstream
+=======
+//上传文件完成
+y2wIMBridge.prototype.onFileLoadSuccess = function(targetId, scene, options,name,fileSize, cb, e){
+    var that = this;
+    options = options || nop;
+
+    that.user.sessions.get(targetId, scene, function (err, session) {
+        //创建消息对象
+        var message = session.messages.createMessage({
+            sender: that.user.id,
+            to: targetId,
+            type: 'file',
+            content: { base64: e.target.result, name: name, size: fileSize },
+            status: 'storing'
+        });
+>>>>>>> Stashed changes
 
 /**
  * 发送文件消息
