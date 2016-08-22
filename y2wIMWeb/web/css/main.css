@@ -1,5 +1,5 @@
-html, body {
-    background: #4e5359 url(../images/bg.jpg) repeat 0 0;
+body {
+     background: #4e5359 url(../images/bg.jpg) repeat 0 0;
     background-size: cover;
     color: #3a4a59;
     font: 14px/1.5 Helvetica, Arial, Tahoma'微软雅黑';

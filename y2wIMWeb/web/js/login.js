@@ -69,7 +69,7 @@ var Login = {
 	},
 
 	requestLogin: function(email, pwd) {
-        var that = this;
+	    var that = this;
         Users.getInstance().remote.login(email, pwd, function(err){
             if(err){
                 that.$errorMsg.html(JSON.parse(err.responseText).message).removeClass('hide');

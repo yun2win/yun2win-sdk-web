@@ -638,7 +638,7 @@ var y2w = {
         }
     },
     //发送邀请加入音视频通知
-    sendVideoMessage: function (type, receiverIds, mode, channelId) {
+    sendVideoMessage: function (type, receiverIds, mode, channelId,roomId) {
 
         var scene = this.$chatEditor.data('type'),
          to = this.$chatEditor.data('to');
@@ -647,6 +647,7 @@ var y2w = {
             receiversIds: receiverIds,
             avcalltype: mode,
             channelId: channelId,
+            roomId:roomId,
             sessionId: currentUser.currentSession.id
         };
         currentUser.y2wIMBridge.sendcallVideoMessage(to, scene, content);
@@ -1065,13 +1066,18 @@ var y2w = {
         var senderId = content.senderId;
         var avcalltype= content.avcalltype;
         var channelId = content.channelId;
+        var roomId = content.roomId;
         var comtext;
+        var channmode,channtype;
         if (avcalltype == 'video') {
             comtext = '视频通话';
-        } else {
+            channmode = "AVSW";
+        } else if(avcalltype == 'audio'){
             comtext = '音频通话';
+            channmode = "ASW";
         }
         if (syncObj.type == "groupavcall") {
+            channtype = 'group';
             var sessionId = content.sessionId;
             //var sendername = currentUser.userSessions.get(sessionId).members.getMember(senderId).name;
 
@@ -1087,6 +1093,7 @@ var y2w = {
             comtext = '邀请您参与群组' + comtext;
             $('#callvideo_content_userinfo')[0].innerText = comtext;
         } else if (syncObj.type == "singleavcall") {
+            channtype = 'p2p';
             var sender = currentUser.contacts.get(senderId);
             var sendername = sender.name;
             $('.callvideo_bg').removeClass('hide');
@@ -1108,9 +1115,18 @@ var y2w = {
         });
         $("#callvideo_buttom_call").on("click", function () {
             $('.callvideo_bg').addClass('hide');
-            window.open("../yun2win/videoAudio.html?userid=" + currentUser.id + "&channelId=" + channelId + "&type=" + avcalltype, "_blank");
+            if(!roomId)
+                roomId =null;
+           var y2wVideo = new RTCManager();
+           y2wVideo.gotoVideoAudio(channelId, roomId, channmode, channtype, currentUser.id, currentUser.name, currentUser.avatarUrl, currentUser.imToken, function (error, data) {
+               if (error) {
+                   return;
+               }
+               //window.open("https://av-api.liyueyun.com/media/?channelSign=" + dataId, "_blank");
+               //已经布好https，可以定义logo等界面访问下面
+               window.open("../yun2win/videoAudio.html?channelSign=" + data.dataId, "_blank");
+           });
         });
     }
-
 };
 y2w.init();

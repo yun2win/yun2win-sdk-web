@@ -319,23 +319,32 @@ chatInfo.prototype.gotoAddChatMembers = function(obj){
  * 邀请加入群聊 
  * @param obj
  */
-chatInfo.prototype.addgroup_Members = function (scene,obj,mode) {
+chatInfo.prototype.addgroup_Members = function (type,obj,mode) {
+    var channmode;
+    if (mode == 'video') {
+        channmode = 'AVSW';
+    } else {
+        channmode = 'ASW';
+    }
     var y2wVideo = new RTCManager();
-    y2wVideo.createVideo(currentUser.id, currentUser.imToken, function (error, channelId) {
+    y2wVideo.gotoVideoAudio(null, null, channmode, type, currentUser.id, currentUser.name, currentUser.avatarUrl, currentUser.imToken, function (error, data) {
         if (error) {
             return;
         }
-        var receiverIds=[];
-        if (scene === 'p2p') {
+        var receiverIds = [];
+        if (type === 'p2p') {
             receiverIds[receiverIds.length] = obj;
-        }else{
+        } else {
             for (var i = 0; i < obj.selected.length; i++) {
                 receiverIds[receiverIds.length] = obj.selected[i].id;
             }
         }
-        //发送通知
-        y2w.sendVideoMessage(scene, receiverIds, mode, channelId);
-        window.open("../yun2win/videoAudio.html?userid=" + currentUser.id + "&channelId=" + channelId + "&type=" + mode, "_blank");
+        //发送通知通知其他人加入
+        y2w.sendVideoMessage(type, receiverIds, mode, data.channelId, data.roomId);
+        // window.open("https://av-api.liyueyun.com/media/?channelSign=" + dataId, "_blank");
+        //已经布好https，可以定义logo等界面访问下面
+        window.open("../yun2win/videoAudio.html?channelSign=" + data.dataId, "_blank");
+
     });
 }
 

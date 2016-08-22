@@ -12,21 +12,21 @@ var y2wIMBridge = function(user){
         file: 1,
         singleavcall: 2,//单人 音视频 
         groupacall: 3//多人音视频
-    }
+    };
 
     this.syncTypes = {
         userConversation: 0,
         message: 1,
         contact: 2,
         userSession: 3
-    }
+    };
     this.syncList = [];
     this.syncDic = {};
     this.syncStatus = {
         none: 0,
         syncing: 1,
         repeat: 2
-    }
+    };
     this.getSyncStatus = function(syncObj){
         var key;
         switch(syncObj.type){
@@ -41,7 +41,7 @@ var y2wIMBridge = function(user){
         if(this.syncDic[key] == undefined)
             return this.syncStatus.none;
         return this.syncDic[key];
-    }
+    };
     this.setSyncStatus = function(syncObj, status){
         var key;
         switch(syncObj.type){
@@ -72,7 +72,7 @@ var y2wIMBridge = function(user){
                     break;
             }
         }
-    }
+    };
     /**
      * 处理同步消息
      * @param syncObj
@@ -106,7 +106,7 @@ var y2wIMBridge = function(user){
             this.setSyncStatus(syncObj, this.syncStatus.none);
             cb();
         }
-    }
+    };
     this.handleSync_UserConversation = function(syncObj, cb){
         var that = this;
         this.user.userConversations.remote.sync(function(err){
@@ -124,7 +124,7 @@ var y2wIMBridge = function(user){
                 cb();
             }
         })
-    }
+    };
     this.handleSync_Contact = function(syncObj, cb){
         var that = this;
         this.user.contacts.remote.sync(function(err){
@@ -142,7 +142,7 @@ var y2wIMBridge = function(user){
                 cb();
             }
         })
-    }
+    };
     this.handleMessage = function(){
         var that = this;
         if(this.syncList.length > 0){
@@ -152,25 +152,25 @@ var y2wIMBridge = function(user){
                     this.handleSync_Contact(syncObj, function(){
                         if(that.syncList.length > 0)
                             that.handleMessage();
-                    })
+                    });
                     break;
                 case this.syncTypes.userConversation:
                     this.handleSync_UserConversation(syncObj, function(){
                         if(that.syncList.length > 0)
                             that.handleMessage();
-                    })
+                    });
                     break;
                 case this.syncTypes.message:
                     this.handleSync_Message(syncObj, function(){
                         if(that.syncList.length > 0)
                             that.handleMessage();
-                    })
+                    });
                     break;
                 default :
                     break;
             }
         }
-    }
+    };
 
     var onDisconnected = function (returnCode) {
         switch (returnCode) {
@@ -189,7 +189,7 @@ var y2wIMBridge = function(user){
                     }
                     console.info('sync token success');
                     that.connect();
-                })
+                });
                 break;
             case y2wIM.connectionReturnCode.appKeyIsInvalid:
                 console.error('disconnected: appkey is invalid');
@@ -263,7 +263,7 @@ var y2wIMBridge = function(user){
                     break;
             }
         }
-    }
+    };
     this.onSendMessage = {
         onSuccess: function () {
             console.log('send success');
@@ -305,7 +305,7 @@ var y2wIMBridge = function(user){
                         }
                         var imSession = that.transToIMSession(busiSession);
                         that._client.sendMessage(imSession, message, that.onSendMessage);
-                    })
+                    });
                     break;
                 case y2wIM.sendReturnCode.sessionMTSOnServerHasExpired:
                     console.error('send error: session mts on server has expired, update server session and resend message');
@@ -320,8 +320,12 @@ var y2wIMBridge = function(user){
                     break;
             }
         }
-    }
+    };
     this.onMessage = function(obj){
+        if (Notification.permission == 'granted') {
+            new Notification('yun2win', {body: '您有一条新消息'});
+        }
+
         var that = currentUser.y2wIMBridge;
         var message = obj.message;
         if(obj.cmd == 'sendMessage'){
@@ -353,8 +357,12 @@ var y2wIMBridge = function(user){
         }
     };
 
+    if (Notification.permission != 'granted') {
+        Notification.requestPermission();
+    }
+
     this.connect();
-}
+};
 y2wIMBridge.prototype.connect = function(){
     var that = this;
     var opts = {
@@ -368,11 +376,11 @@ y2wIMBridge.prototype.connect = function(){
     y2wIM.connect(opts, function(client){
         that._client = client;
     });
-}
+};
 y2wIMBridge.prototype.disconnect = function(cb){
     cb = cb || nop;
     this._client.disconnect(cb);
-}
+};
 y2wIMBridge.prototype.transToIMSession = function(busiSession, withMembers, time){
     var session = {};
     session.id = busiSession.type + '_' + busiSession.id;
@@ -398,20 +406,20 @@ y2wIMBridge.prototype.transToIMSession = function(busiSession, withMembers, time
         }
     }
     return session;
-}
+};
 y2wIMBridge.prototype.sendMessage = function(imSession, sync){
     var message = {
         syncs: sync
-    }
+    };
     this._client.sendMessage(imSession, message, this.onSendMessage);
-}
+};
 
 y2wIMBridge.prototype.addToSendList = function(obj){
     this.sendList.push(obj);
     if(this.sendList.length == 1){
         this.handleSendMessage();
     }
-}
+};
 y2wIMBridge.prototype.handleSendMessage = function(){
     var that = this;
     if(this.sendList.length > 0){
@@ -421,31 +429,31 @@ y2wIMBridge.prototype.handleSendMessage = function(){
                 this.handleSendTextMessage(sendObj, function(){
                     if(that.sendList.length > 0)
                         that.handleSendMessage();
-                })
+                });
                 break;
             case this.sendTypes.file:
                 this.handleSendFileMessage(sendObj, function(){
                     if(that.sendList.length > 0)
                         that.handleSendMessage();
-                })
+                });
                 break;
             case this.sendTypes.singleavcall:
                 this.handleSendCallMessage(sendObj, function () {
                     if (that.sendList.length > 0)
                         that.handleSendMessage();
-                })
+                });
                 break;
             case this.sendTypes.groupacall:
                 this.handleSendCallMessage(sendObj, function () {
                     if (that.sendList.length > 0)
                         that.handleSendMessage();
-                })
+                });
                 break;
             default :
                 break;
         }
     }
-}
+};
 y2wIMBridge.prototype.handleSendTextMessage = function(sendObj, cb){
     var targetId = sendObj.targetId,
         scene = sendObj.scene,
@@ -482,7 +490,7 @@ y2wIMBridge.prototype.handleSendTextMessage = function(sendObj, cb){
             var syncs = [
                 { type: that.syncTypes.userConversation },
                 { type: that.syncTypes.message, sessionId: imSession.id }
-            ]
+            ];
             that.sendMessage(imSession, syncs);
 
             if(options.storeMsgDone)
@@ -492,7 +500,7 @@ y2wIMBridge.prototype.handleSendTextMessage = function(sendObj, cb){
             cb();
         })
     });
-}
+};
 y2wIMBridge.prototype.handleSendCallMessage = function (sendObj, cb) {
     var targetId = sendObj.targetId,
        scene = sendObj.scene,
@@ -511,12 +519,12 @@ y2wIMBridge.prototype.handleSendCallMessage = function (sendObj, cb) {
                 { type: that.syncTypes.userConversation },
                 { type: that.syncTypes.message, sessionId: imSession.id },
                  { type: msgtype, content: text }
-        ]
+        ];
         that.sendMessage(imSession, syncs);
         that.sendList.splice(0, 1);
         cb();
     });
-}
+};
 
 y2wIMBridge.prototype.handleSendFileMessage = function(sendObj, cb){
     var targetId = sendObj.targetId,
@@ -536,7 +544,7 @@ y2wIMBridge.prototype.handleSendFileMessage = function(sendObj, cb){
         fileReader.onload = this.onFileLoadSuccess.bind(this, targetId, scene, options,file.name,file.size, cb);
         fileReader.onerror = this.onFileLoadError.bind(this, cb)
     }
-}
+};
 
 /**
  * 发送文字消息
@@ -557,7 +565,7 @@ y2wIMBridge.prototype.sendTextMessage = function(targetId, scene, text, options)
         options: options,
         type: this.sendTypes.text
     });
-}
+};
 
 y2wIMBridge.prototype.onImageLoadSuccess = function(targetId, scene, options, cb, e){
     var that = this;
@@ -615,7 +623,7 @@ y2wIMBridge.prototype.onImageLoadSuccess = function(targetId, scene, options, cb
                     var syncs = [
                         { type: that.syncTypes.userConversation },
                         { type: that.syncTypes.message, sessionId: imSession.id }
-                    ]
+                    ];
                     that.sendMessage(imSession, syncs);
 
                     if (options.storeMsgDone)
@@ -632,78 +640,7 @@ y2wIMBridge.prototype.onImageLoadError = function(){
     this.sendList.splice(0, 1);
     cb();
 };
-y2wIMBridge.prototype.onFileLoadSuccess = function(targetId, scene, options,name,fileSize, cb, e){
-    var that = this;
-    options = options || nop;
 
-    that.user.sessions.get(targetId, scene, function (err, session) {
-        //创建消息对象
-        var message = session.messages.createMessage({
-            sender: that.user.id,
-            to: targetId,
-            type: 'file',
-            content: { base64: e.target.result, name: name, size: fileSize },
-            status: 'storing'
-        });
-
-        session.messages.add(message);
-        var id = message.id;
-        //显示消息
-        if(options.showMsg)
-            options.showMsg(message);
-        //上传图片
-        var fileName = guid() + '.png';
-        that.user.attchments.uploadBase64(fileName,"application/octet-stream", e.target.result, function(err, data) {
-            if (err) {
-                console.error(err);
-                if (options.storeMsgFailed)
-                    options.storeMsgFailed(id);
-                currentUser.y2wIMBridge.sendList.splice(0, 1);
-                cb();
-                return;
-            }
-            var src = 'attachments/' + data.id + '/content';
-            //保存消息对象
-            message.content.src = src;
-            //message.content.thumbnail = src;
-            delete message.content.base64;
-            session.messages.remote.store(message, function (err, msg) {
-                if (err) {
-                    console.error(err);
-                    if (options.storeMsgFailed)
-                        options.storeMsgFailed(id);
-                    currentUser.y2wIMBridge.sendList.splice(0, 1);
-                    cb();
-                    return;
-                }
-
-                //发送通知
-                var imSession = that.transToIMSession(session);
-                var syncs = [
-                    { type: that.syncTypes.userConversation },
-                    { type: that.syncTypes.message, sessionId: imSession.id }
-                ]
-                that.sendMessage(imSession, syncs);
-
-                if (options.storeMsgDone)
-                    options.storeMsgDone(id, session.type, targetId, msg);
-
-                currentUser.y2wIMBridge.sendList.splice(0, 1);
-
-                //message.content=msg.content;
-                if(options.updateMsg)
-                    options.updateMsg(message);
-
-                cb();
-            })
-        })
-    });
-
-};
-y2wIMBridge.prototype.onFileLoadError = function(){
-    this.sendList.splice(0, 1);
-    cb();
-};
 /**
  * 发送文件消息
  * @param targetId:目标Id
@@ -723,7 +660,7 @@ y2wIMBridge.prototype.sendFileMessage = function(targetId, scene, file, options)
         options: options,
         type: this.sendTypes.file
     });
-}
+};
 y2wIMBridge.prototype.sendcallVideoMessage = function (targetId, scene, content) {
     var sendType;
     if (scene === 'p2p') {
@@ -738,4 +675,4 @@ y2wIMBridge.prototype.sendcallVideoMessage = function (targetId, scene, content)
         content: content,
         type: sendType
     });
-}
+};
