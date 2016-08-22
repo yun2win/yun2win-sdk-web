@@ -209,7 +209,7 @@ chat.prototype.getMessage = function(msg) {
 
             var capacity=Util.parseCapacity(msg.content.size);
 
-            str='<a class="download-file" href="'+src+'" f-maxWid><img src="images/'+icon+'"/><span class="ftitle">'+msg.content.name+'</span><span class="fremark">'+capacity+'</span></a>';
+            str='<a class="download-file" href="'+src+'" f-maxWid><img src="images/'+icon+'"/><span class="ftitle">'+msg.content.name+'</span><span class="fremark">'+capacity+'</span><span class="downloading">下载中</span></a>';
 
             //if(msg.status === -1){
             //    str = '<p>['+msg.message.message+']</p>';

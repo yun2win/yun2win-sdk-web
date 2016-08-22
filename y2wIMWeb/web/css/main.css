@@ -93,6 +93,12 @@ body {
 .download-file .ftitle{line-height: 30px; display: block;height:30px; overflow: hidden; min-width:100px; }
 .download-file .fremark{ display: block; line-height: 30px; font-size:12px; }
 .item-you .download-file img{  float:right;  margin-left: 10px;}
+.download-file .downloading {
+    display: none;
+    float: right;
+    width: 50px;
+    margin-top: -25px;
+}
 
 
 /*.msg:before {*/
