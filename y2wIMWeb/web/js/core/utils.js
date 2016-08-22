@@ -124,7 +124,7 @@ baseRequest.put = function(url, params, token, cb){
     });
 }
 
-baseRequest.uploadBase64Image = function(url, fileName, imageData, token, cb){
+baseRequest.uploadBase64 = function(url, type,fileName, imageData, token, cb){
     if(!cb)
         cb = nop;
     var boundaryKey = Math.random().toString(16);
@@ -134,7 +134,7 @@ baseRequest.uploadBase64Image = function(url, fileName, imageData, token, cb){
     xhr.overrideMimeType("application/octet-stream");
     xhr.setRequestHeader('Content-Type', 'multipart/form-data; boundary='+boundaryKey+'');
     var data_0 = '--' + boundaryKey + '\r\n';
-    data_0 += 'Content-Type: image/jpg\r\n';
+    data_0 += 'Content-Type: '+type+'\r\n';
     data_0 += 'Content-Disposition: form-data; name="pic"; filename="' + fileName + '"\r\n';
     data_0 += 'Content-Transfer-Encoding: binary\r\n\r\n';
     var bytes0 = transTextToBytes(data_0);
@@ -269,3 +269,28 @@ function quickSortAlgo(items, attr, left, right, desc) {
 function quickSort(items, attr, desc){
     return quickSortAlgo(items, attr, 0, items.length - 1, desc);
 }
+
+function parseAttachmentUrl(src,token,name){
+    if(!src)
+        return "#";
+    name=name?"/"+encodeURIComponent(name):"";
+    token=token||"";
+    if(src.indexOf("http://")>=0 || src.indexOf("https://")>=0)
+        return src;
+
+    return config.baseUrl + src + name+'?access_token=' + token;
+}
+
+
+
+var Util={};
+Util.parseCapacity=function(num){
+    if(typeof num=="string")
+        num=parseInt(num);
+
+    if(num<1024*1024)
+        return (num*1.0/1024).toFixed(2)+"KB";
+
+    return (num*1.0/1024/1024).toFixed(2)+"MB"
+
+};

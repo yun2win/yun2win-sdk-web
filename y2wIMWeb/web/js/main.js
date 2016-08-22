@@ -585,7 +585,7 @@ var y2w = {
                 that.clearUnRead(currentUser.currentSession.getConversation());
 
                 if(messages)
-                    that.updateMsgs(messages);
+                    that.appendMsgs(messages);
 
                 //that.buildMsgs(session.messages.getMessages());
                 cb();
@@ -672,7 +672,8 @@ var y2w = {
         var options = {
             showMsg: that.showMsg.bind(that),
             storeMsgFailed: that.storeMsgFailed.bind(that),
-            storeMsgDone: that.storeMsgDone.bind(that)
+            storeMsgDone: that.storeMsgDone.bind(that),
+            updateMsg:that.changeUrl.bind(that)
         }
         currentUser.y2wIMBridge.sendFileMessage(to, scene, file, options);
     },
@@ -682,6 +683,16 @@ var y2w = {
         var msgHtml = this.chat.updateChatContentUI(msg);
         this.$chatContent.append(msgHtml);
         this.$chatContentWrap.scrollTop(99999);
+    },
+    changeUrl:function(msg){
+        var that=this;
+        var $dom = that.$chatContent.find('div[data-id=' + msg.id + ']');
+        //var msgHtml = this.chat.updateChatContentUI(messages[i]);
+        //$dom.after(msgHtml);
+        var src = parseAttachmentUrl(msg.content.src,currentUser.token,msg.content.name);//config.baseUrl + msg.content.src + '/'+msg.content.name+'?access_token=' + currentUser.token;
+        $dom.find("a.download-file").attr('href',src);
+        //$dom.remove();
+
     },
     storeMsgDone: function(id, type, targetId, msg){
         //同步会话及消息
@@ -930,7 +941,7 @@ var y2w = {
             }
         })
     },
-    updateMsgs: function(messages){
+    appendMsgs: function(messages){
         var that = this;
         for(var i = 0; i < messages.length; i++){
             var $dom = that.$chatContent.find('div[data-id=' + messages[i].id + ']');
@@ -938,6 +949,7 @@ var y2w = {
                 var msgHtml = this.chat.updateChatContentUI(messages[i]);
                 this.$chatContent.append(msgHtml);
             }
+
         }
         //var temp = appUI.buildChatContentUI(messages);
         //that.$chatContent.html(temp);

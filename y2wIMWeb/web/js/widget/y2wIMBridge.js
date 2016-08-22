@@ -538,7 +538,11 @@ y2wIMBridge.prototype.handleSendFileMessage = function(sendObj, cb){
         fileReader.onerror = this.onImageLoadError.bind(this, cb)
     }
     else{
-        throw 'format is invalid';
+        //throw 'format is invalid';
+        var fileReader = new FileReader();
+        fileReader.readAsDataURL(file);
+        fileReader.onload = this.onFileLoadSuccess.bind(this, targetId, scene, options,file.name,file.size, cb);
+        fileReader.onerror = this.onFileLoadError.bind(this, cb)
     }
 };
 
@@ -636,6 +640,7 @@ y2wIMBridge.prototype.onImageLoadError = function(){
     this.sendList.splice(0, 1);
     cb();
 };
+
 /**
  * 发送文件消息
  * @param targetId:目标Id
