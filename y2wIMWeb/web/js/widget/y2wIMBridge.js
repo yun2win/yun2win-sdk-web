@@ -656,6 +656,11 @@ y2wIMBridge.prototype.onFileLoadSuccess = function(targetId, scene, options,name
         });
     });
 };
+
+y2wIMBridge.prototype.onFileLoadError = function(){
+    this.sendList.splice(0, 1);
+    cb();
+};
 /**
  * 发送文件消息
  * @param targetId:目标Id
