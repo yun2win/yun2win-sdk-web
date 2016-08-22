@@ -1320,10 +1320,6 @@ function config(){
 
 }
 
-config.baseUrl = 'http://112.74.210.208:8080/v1/';
-//config.baseUrl = 'http://192.168.0.104:8080/v1/';
-config.y2wAutorizeUrl = 'http://console.yun2win.com/';
-
 function nop() {}
 
 var globalMinDate = new Date(2000, 0, 1).getTime();
@@ -1606,8 +1602,10 @@ var Users = (function(){
         this.remote = usersRemoteSingleton.getInstance(this);
 
         this.getCurrentUser = function(){
-            if(this.localStorage.getCurrentUserId() == null)
-                throw 'currentUserId is null, pls relogin!';
+            if (this.localStorage.getCurrentUserId() == null) {
+                alert('您登录的信息已过期,请重新登录!');
+                y2w.logout();
+            }
             if(!_list){
                 _list = this.localStorage.getUsers(this.localStorage.getCurrentUserId());
                 for(var k in _list){

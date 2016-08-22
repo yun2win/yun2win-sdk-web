@@ -126,7 +126,7 @@ input:-webkit-autofill {
     position: absolute;
     left: 25px;
     top: 10px;
-    display: inline-block
+    display: inline-block;
     color:#999;
 
 }
