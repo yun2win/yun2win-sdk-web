@@ -658,6 +658,8 @@ var y2w = {
             fileInput = this.$fileInput.get(0),
             that = this;
         var file = fileInput.files[0];
+        if(!file)
+            return;
         if(file.size==0) {
             alert("不能传空文件");
             return;
