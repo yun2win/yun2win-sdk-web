@@ -146,10 +146,10 @@ chat.prototype.getMessage = function(msg) {
                     height = parseInt(msg.content.height * maxWidth / msg.content.width);
                     width = maxWidth;
                 }
-                str = '<img src="' + src + '" style="width:' + width + 'px; height:' + height + 'px" />';
+                str = '<a href="' + src + '" data-thumbnail="' + src + '" data-gallery="message"><img src="' + src + '" style="width:' + width + 'px; height:' + height + 'px" /></a>';
             }
             else
-                str = '<img src="' + src + '" />';
+                str = '<a href="' + src + '" data-thumbnail="' + src + '" data-gallery="message"><img src="' + src + '" /></a>';
 
             //if(msg.status === -1){
             //    str = '<p>['+msg.message.message+']</p>';
