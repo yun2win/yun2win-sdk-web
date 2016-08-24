@@ -9,6 +9,7 @@ var y2w = {
         this.initNode();
         this.chatInfo = new chatInfo();
         this.selector = new selector();
+        this.userInfo = new userInfo();
         this.addEvent();
         this.tab = new tab();
         this.chooseAvatar = new chooseAvatar();
@@ -111,14 +112,31 @@ var y2w = {
         this.$myAvatar.on('click',this.showMyInfo.bind(this));
         this.$myInfo.delegate('.close', 'click', this.hideMyInfoBox.bind(this));
         this.$myInfo.delegate('.operate .j-edit', 'click', this.showEditMyInfo.bind(this));
+        this.$myInfo.delegate('.operate .j-editPassword', 'click', this.showEditPassword.bind(this));
         this.$myInfo.delegate('.operate .j-cancel', 'click', this.hideEditMyInfo.bind(this));
         this.$myInfo.delegate('.operate .j-save', 'click', this.saveEditMyInfo.bind(this));
+        this.$myInfo.delegate('.operate .j-savePassword', 'click', this.saveEditPassword.bind(this));
         this.$myInfo.delegate('.j-modifyAvatar', 'click', this.showModifyAvatar.bind(this));
 
         $("#datepicker").datepicker({yearRange:"1900:2015"});
+
+
+
+        //用户信息
+        $("#j-chatContentWrap").on("click",this.showUserInfo.bind(this));
     },
 
+    showUserInfo:function(e){
+        var evt = e || window.event,
+            target = evt.srcElement || evt.target;
+        var doms=$(target).parents(".item-avatar");
+        var account=doms.attr("data-account");
+        //console.log(account);
+        if(!account)
+            return;
 
+        this.userInfo.show(e,account);
+    },
 
 
     //左栏上方自己的信息
@@ -165,6 +183,14 @@ var y2w = {
         this.$myInfo.removeClass('edit');
         this.$mask.addClass('hide');
     },
+    showEditPassword:function(){
+        this.$myInfo.find(".e-psw").focus();
+        this.$myInfo.addClass('editpassword');
+        var ttd=this.$myInfo.find(".tt");
+        this.$myInfo.attr("tt",ttd.text());
+        ttd.text("更改密码");
+
+    },
     showEditMyInfo:function(){
         this.$myInfo.find(".e-nick").val(currentUser.name);
         if(currentUser.phone !==undefined){
@@ -173,7 +199,10 @@ var y2w = {
         this.$myInfo.addClass('edit');
     },
     hideEditMyInfo:function(){
-        this.$myInfo.removeClass('edit');
+        var pname=this.$myInfo.attr("tt");
+        if(pname)
+            this.$myInfo.find(".tt").text(pname);
+        this.$myInfo.removeClass('edit').removeClass('editpassword');
     },
 
     saveEditMyInfo:function(){
@@ -197,6 +226,42 @@ var y2w = {
         currentUser.name = nick;
         currentUser.phone = tel;
         currentUser.remote.store(that.cbSaveMyInfo.bind(that));
+    },
+    saveEditPassword:function(){
+        var that = this;
+        var $node = this.$myInfo;
+        var psw = $node.find(".e-psw").val().trim();
+        var npsw = $node.find(".e-npsw").val().trim();
+        var rnpsw = $node.find(".e-rnpsw").val().trim();
+        if(!psw){
+            alert("原密码不能为空");
+            return;
+        }
+        if(!npsw){
+            alert("新密码不能为空");
+            return;
+        }
+        if(rnpsw!=npsw){
+            alert("两次输入的新密码不一致");
+            return;
+        }
+        if(npsw.length<6){
+            alert("新密码必须6位");
+            return;
+        }
+
+
+        currentUser.remote.setPassword(psw,npsw,function(err){
+            if(err){
+                alert(err);
+            }
+            else{
+                that.showMe();
+                that.$myInfo.removeClass("edit").removeClass("editpassword");
+                that.showMyInfo();
+                alert("密码更改成功!")
+            }
+        });
     },
 
     cbSaveMyInfo:function(err,data){
@@ -634,6 +699,34 @@ var y2w = {
             }
             currentUser.y2wIMBridge.sendTextMessage(to, scene, text, options);
             this.$messageText.val('').focus();
+            this.$chatContent.find('.no-msg').remove();
+        }
+    },
+    sendSystemMessage:function(message){
+        var scene = this.$chatEditor.data('type'),
+            to = this.$chatEditor.data('to'),
+            text = message,
+            that = this;
+        if (!!to && !!text) {
+            if (text.length > 500 && text.length === 0) {
+                alert('消息内容不能为空，且长度最大为500字符');
+                return;
+            }
+            if (scene == 'group') {
+                var sessionMember = currentUser.currentSession.members.getMember(currentUser.id);
+                if (sessionMember.isDelete) {
+                    alert('您已不在此群中，不能发送消息');
+                    that.$messageText.val('').focus();
+                    return;
+                }
+            }
+            var options = {
+                showMsg: that.showMsg.bind(that),
+                storeMsgFailed: that.storeMsgFailed.bind(that),
+                storeMsgDone: that.storeMsgDone.bind(that)
+            };
+            currentUser.y2wIMBridge.sendSystemMessage(to, scene, text, options);
+            //this.$messageText.val('').focus();
             this.$chatContent.find('.no-msg').remove();
         }
     },

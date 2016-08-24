@@ -45,7 +45,8 @@ var Users = (function(){
                 this.localStorage.setUsers(_list);
                 return user;
             }
-        }
+        };
+
     }
     return{
         getInstance: function(){
@@ -93,7 +94,7 @@ var usersLocalStorageSingleton = (function(){
         }
         this.setUsers = function(users){
             localStorage.setItem(this.getCurrentUserId() + '_users', JSON.stringify(users));
-        }
+        };
     }
     return{
         getInstance: function(users, list){
@@ -155,6 +156,36 @@ var usersRemoteSingleton = (function(){
                     cb(null, null);
             });
         };
+        this.get = function(id, token, cb){
+            cb = cb || nop;
+            var url = 'users/' + id;
+            baseRequest.get(url, null, currentUser.token, function(err, obj){
+                if(err){
+                    cb(err);
+                    return;
+                }
+                if(obj){
+                    var info =obj;
+                    var user = _users.get(info.id);
+
+                    if(!user)
+                        user = _users.create(info.id, info.name, info.email, info.avatarUrl);
+                    else{
+                        user.id=info.id;
+                        user.name=info.name;
+                        user.account=info.email;
+                        user.avatarUrl=info.avatarUrl;
+                        user.date=new Date();
+                        if(user.avatarUrl.indexOf('/images/default.jpg') >= 0)
+                            user.avatarUrl = ' ';
+                        _users.localStorage.setUsers(_users.getUsers());
+                    }
+                    cb(null, user);
+                }
+                else
+                    cb(null, null);
+            });
+        };
     }
     return{
         getInstance: function(users){
@@ -200,7 +231,8 @@ User.prototype.toJSON = function(){
 
 User.prototype.getAvatarUrl = function(){
     if(this.avatarUrl && $.trim(this.avatarUrl) != '' && $.trim(this.avatarUrl) != '..')
-        return config.baseUrl + this.avatarUrl + '?access_token=' + currentUser.token;
+        return parseAttachmentUrl(this.avatarUrl,currentUser.token);
+        //return config.baseUrl + this.avatarUrl + '?access_token=' + currentUser.token;
     return null;
 }
 
@@ -287,7 +319,7 @@ var currentUserRemoteSingleton = (function(){
                 _user.imToken = data.access_token;
                 cb(null, _user.imToken);
             })
-        }
+        };
         this.store = function(cb){
             cb = cb || nop;
             var url = 'users/' + _user.id;
@@ -310,7 +342,35 @@ var currentUserRemoteSingleton = (function(){
                 Users.getInstance().localStorage.setUsers(Users.getInstance().getUsers());
                 cb(null);
             })
-        }
+        };
+        this.setPassword=function(psw,npsw,cb){
+            cb = cb || nop;
+            var url= 'users/setPassword';
+            var params={
+                oldPassword:MD5(psw),
+                password:MD5npsw
+            };
+            baseRequest.post(url, params, _user.token, function(err){
+                if(err){
+                    if(err.responseText){
+                        try {
+                            var error = JSON.parse(err.responseText);
+                            cb(error.message)
+                        }
+                        catch(e){
+                            cb(err);
+                        }
+                    }
+                    else {
+                        cb(err);
+                    }
+                    return;
+                }
+
+                cb(null);
+            })
+
+        };
     }
     return{
         getInstance: function(user){

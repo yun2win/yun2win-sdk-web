@@ -584,6 +584,9 @@ body {
 .m-card .infos .editUI{
     display: none;
 }
+.m-card .infos .editUI-password{
+    display: none;
+}
 .m-card .infos .ipt{
     width: 170px;
     padding: 0 10px;
@@ -626,6 +629,11 @@ body {
     color: #fff;
     display: none;
 }
+.m-card .operate .savepassword{
+    background-color: #238efa;
+    color: #fff;
+    display: none;
+}
 .m-card .operate .cancel{
     background-color: #eee;
     color: #3a4a59;
@@ -646,6 +654,24 @@ body {
 .m-card.edit .infos .editUI{
     display: block;
 }
+
+.m-card.editpassword .operate .edit{
+    display: none;
+}
+.m-card.editpassword .operate .savepassword{
+    display: inline-block;
+}
+.m-card.editpassword .operate .cancel{
+    display: inline-block;
+}
+.m-card.editpassword .infos .showUI{
+    display: none;
+}
+.m-card.editpassword .infos .editUI-password{
+    display: block;
+}
+.m-card.editpassword .ipt{    margin-left: 30px;}
+
 .m-card .infos .items{
     position: relative;
     padding-left: 50px;
@@ -660,8 +686,9 @@ body {
     left: 0px;
     top:4px;
 }
-.m-card .editUI .item{
-    top:6px;
+.m-card .editUI .item,
+.m-card .editUI-password .item{
+    top:10px;
 }
 .m-card .infos .sign{
     margin-top: -4px;
@@ -1575,6 +1602,24 @@ width: 40px;
     margin-top: 4px;
     color: #999999;
 }
+.chat-box .chat-member .role{
+    display: block;
+    width: 14px;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-wrap: normal;
+    overflow: hidden;
+    font-size: 12px;
+    color: #fff;
+    margin: 0 auto;
+    /* margin-top: -30px; */
+    background: #09c;
+    /* z-index: 0; */
+    border-radius: 3px;
+    float:left;
+    line-height: 14px;
+}
 .chat-box .chat-member .tool{
     width: 64px;
     height: 64px;
@@ -1950,6 +1995,7 @@ width: 40px;
     border-radius: 6px;
     -webkit-border-radius: 6px;
     -moz-border-radius: 6px;
+    box-shadow: 0px 0px 10px #000;
 }
 .chooseAvatar .icon-close{
     z-index: 1;
@@ -2038,6 +2084,24 @@ width: 40px;
     display: inline-block;
     height: 262px;
 }
+
+/*---------------------用户卡片---------------------*/
+
+.u-card-over{ background: #fff; opacity: 0.0; position: fixed; left:0; top:0;right:0;bottom:0; z-index: 999; }
+.u-card{ background: #fff; width:200px; min-height:300px; position: fixed; left:50%; top:50%; z-index:1000; box-shadow: 0px 0px 5px #555; }
+.u-card-head{width:200px; height:200px; position: relative;}
+.u-card-head img{width:200px; height:200px; }
+.u-card-head .u-name{ position: absolute; left:10px; bottom:10px; color:#fff; text-shadow: 1px 1px 3px #000;}
+.u-card-attrs{ height:40px; padding: 10px;}
+.u-card-attr{ line-height: 20px;}
+.u-card-attr label{ color:#999;}
+.u-card-btns{  min-height:40px; }
+.u-card-btn{  text-align: center; background: #f4f4f4; line-height: 40px; cursor: pointer; }
+.u-card-btn:hover,
+.u-card-btn:active{ background: #21c0c0;  color:#fff; }
+
+/*---------------------------------------------*/
+
 /*-------------------用户信息-------------------*/
 .avatar-user-info{
     width: 80px;
@@ -2166,4 +2230,9 @@ width: 40px;
     line-height:28px;
     padding-left:33px;
 }
+
+
+
+
+
 /*-------------------结束-------------------*/

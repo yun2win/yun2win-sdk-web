@@ -64,12 +64,21 @@
                         </div>
                         <ul class="chat-nav" id="chatNav">
                             <li class="hide" id="editContactTitle">
-                                <span class="title">修改备注</span>
+                                <span class="title">备注</span>
                                 <span class="text"></span>
                                 <input class="single hide"/>
                                 <button class="editor btn btn-edit radius5px fr hide">修改</button>
                                 <button class="ok btn btn-ok radius5px fr hide">确定</button>
                                 <button class="cancel btn btn-cancel radius5px fr hide">取消</button>
+                            </li>
+                            <li class="hide" id="editGroupTitle">
+                                <span class="title">群名称</span>
+                                <span class="text"></span>
+                                <input class="single hide"/>
+                                <button class="editor btn btn-edit radius5px fr hide">修改名称</button>
+                                <button class="ok btn btn-ok radius5px fr hide">确定</button>
+                                <button class="cancel btn btn-cancel radius5px fr hide">取消</button>
+                                <button class="editor btn btn-cancel radius5px fr hide">修改头像</button>
                             </li>
                             <li class="hide" id="chatGroupNickName">
                                 <span class="title">我在本群的昵称</span>
@@ -186,6 +195,30 @@
 			<button class="btn btn-del radius4px blacklist j-blacklist">移出黑名单</button>
 		</div>		
 	</div>
+    <!-- 用户卡片 -->
+    <div class="hide" id="userInfo">
+        <div class="u-card-over"></div>
+        <div class="u-card">
+            <div class="u-card-head">
+                <img class="u-head" src="http://im.yun2win.com/v1/attachments/242/content?access_token=Si4tznR61iELWyZd" />
+                <span class="u-name hide">姓名</span>
+            </div>
+            <div class="u-card-attrs">
+                <div class="u-card-attr u-remark" >
+                    <label>姓名</label>
+                    <span>无</span>
+                </div>
+                <div class="u-card-attr u-account">
+                    <label>帐号</label>
+                    <span>aaa@qq.com</span>
+                </div>
+            </div>
+            <div class="u-card-btns">
+                <div class="u-card-btn u-send">发消息</div>
+                <div class="u-card-btn u-add hide">添加到联系人</div>
+            </div>
+        </div>
+    </div>
 	<!-- 个人信息 -->
 	<div class="m-card m-card-1 hide" id="myInfo">
 		<i class="close"></i>
@@ -202,6 +235,8 @@
 		<div class="infos">
 			<div class="operate">
 				<span class="edit j-edit">编辑</span>
+				<span class="edit j-editPassword">更改密码</span>
+                <span class="savepassword j-savePassword">确认</span>
 				<span class="save j-save">保存</span>
 				<span class="cancel j-cancel"> 取消</span>
 			</div>		
@@ -219,9 +254,23 @@
 				</div>
 				<div class="items">
 					<div class="item">手机</div>
-					<input type="text" class="e-tel ipt ipt-1" maxlength="13">	
+					<input type="text" class="e-tel ipt ipt-1" maxlength="13">
 				</div>
 			</div>
+            <div class="editUI-password">
+                <div class="items">
+                    <div class="item">密码</div>
+                    <input type="password" class="e-psw ipt" maxlength="20">
+                </div>
+                <div class="items">
+                    <div class="item">新密码</div>
+                    <input type="password" class="e-npsw ipt" maxlength="20">
+                </div>
+                <div class="items">
+                    <div class="item">重复新密码</div>
+                    <input type="password" class="e-rnpsw ipt" maxlength="20">
+                </div>
+            </div>
 		</div>
 	</div>
 	<div id="mask" class="mask hide"></div>
@@ -231,6 +280,7 @@
     <script src="js/3rd/jquery.cropit.js"></script>
     <script src="js/3rd/async.js"></script>
     <script src="js/3rd/ajaxFileUpload.js"></script>
+    <script src="js/3rd/md5.js"></script>
     <script src="js/common/utils.js"></script>
     <script src="js/core/config.js?v=0.1"></script>
     <script src="js/core/utils.js?v=0.1"></script>
@@ -248,8 +298,11 @@
     <script src="js/widget/tab.js?v=0.1"></script>
     <script src="js/widget/chooseAvatar.js?v=0.1"></script>
     <script src="js/widget/chatInfo.js?v=0.1"></script>
+    <script src="js/widget/userInfo.js?v=0.1"></script>
     <script src="js/widget/selector.js?v=0.1"></script>
     <script src="js/widget/chat.js?v=0.1"></script>
+
+
 	<script src="js/main.js?v=0.1"></script>
 
 

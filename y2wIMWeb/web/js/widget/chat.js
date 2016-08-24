@@ -33,19 +33,23 @@ chat.prototype.updateChatContentUI = function(msg){
 }
 chat.prototype.makeChatContent = function(message){
     var msgHtml;
+    //if(!message.from)
+    //    return "<div></div>";
+    if(!message.from)
+        message.from={};
     //通知类消息
     if (message.type == 'system') {
         msgHtml =  '<div class="u-notice tc item" data-time="'+ message.createdAt +'" data-id="'+ message.id +'"><span class="radius5px">'+message.content.text+'</span></div>';
     }else{
         //聊天消息
         var type = message.type,
-            from = message.from,
+            from = message.from ,
             avatarUrl = from.getAvatarUrl(),
             scene = message.messages.session.type,
             showName = scene === 'group' && from.userId !== currentUser.id,
             name = showName ? from.name : '',
             contentDOM = '',
-            avatarDOM = '<div class="item-avatar" data-account="' + from.userId + '">';
+            avatarDOM = '<div class="item-avatar" data-account="' + (from.userId?from.userId:from.id) + '">';
         avatarDOM += '<span class="avatar avatar-chat';
         if(avatarUrl && avatarUrl != ''){
             avatarDOM += '"</span><img src="'+avatarUrl+'" data-account="' + from + '"/></span>';

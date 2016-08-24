@@ -73,7 +73,7 @@ var SessionMembers = function(session){
                 return _list[k];
         }
         return null;
-    }
+    };
     this.remote = new sessionMembersRemote(this);
     this.init();
 }
@@ -132,7 +132,7 @@ sessionMembersRemote.prototype.add = function(userId, name, role, avatarUrl, sta
         }
         cb(null, data);
     })
-}
+};
 /**
  * 删除会话成员
  * @param memberId:会话成员id
@@ -149,7 +149,26 @@ sessionMembersRemote.prototype.remove = function(memberId, cb){
         }
         cb(null);
     })
-}
+};
+sessionMembersRemote.prototype.update = function(memberId,userId,name,role,avatarUrl,status, cb){
+    var that = this;
+    cb = cb || nop;
+    var url = 'sessions/' + that.sessionMembers.session.id + '/members/'+memberId;
+    var params = {
+        userId: userId,
+        name: name,
+        role: role,
+        avatarUrl: avatarUrl,
+        status: status
+    };
+    baseRequest.put(url, params, that.sessionMembers.session.sessions.user.token, function(err, data){
+        if(err){
+            cb(err);
+            return;
+        }
+        cb(null, data);
+    })
+};
 
 var SessionMember = function(sessionMembers, obj){
     this.sessionMembers = sessionMembers;

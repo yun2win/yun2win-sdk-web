@@ -196,7 +196,9 @@ sessionsRemote.prototype.store = function(session, cb){
         name: session.name,
         secureType: session.secureType,
         avatarUrl: session.avatarUrl
-    }
+    };
+    if(session.nameChanged!=undefined)
+        params.nameChanged=true;
     baseRequest.put(url, params, that.sessions.user.token, function(err, data){
         if(err){
             cb(err);

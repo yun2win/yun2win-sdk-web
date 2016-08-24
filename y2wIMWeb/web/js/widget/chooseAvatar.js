@@ -12,6 +12,22 @@ var chooseAvatar = function(){
     this.$choose = $('<button class="f-fl btn btn-edit radius5px radius4p choose">选择图片</button>').appendTo(this.$footer);
 }
 chooseAvatar.prototype.show = function(options){
+    this.showAndUpload({
+        onChange:function(error,url){
+            currentUser.avatarUrl = url;
+            currentUser.remote.store(function(err){
+                if(err){
+                    console.error(err);
+                    return;
+                }
+                if(options.onChange)
+                    options.onChange();
+            })
+        },
+        onCancel:options.onCancel
+    });
+};
+chooseAvatar.prototype.showAndUpload = function(options){
     var that = this;
     this.$file = $('<input type="file" class="cropit-image-input hide" />');
     this.$imageEditor.append(this.$file);
@@ -32,16 +48,10 @@ chooseAvatar.prototype.show = function(options){
                 return;
             }
             else{
-                currentUser.avatarUrl = 'attachments/' + data.id + '/content';
-                currentUser.remote.store(function(err){
-                    if(err){
-                        console.error(err);
-                        return;
-                    }
-                    that.hide();
-                    if(options.onChange)
-                        options.onChange();
-                })
+                var url = 'attachments/' + data.id + '/content';
+                if(options.onChange)
+                    options.onChange(null,url);
+                that.hide();
             }
         })
     });

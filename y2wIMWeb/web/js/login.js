@@ -57,8 +57,8 @@ var Login = {
 			errorMsg = '';
 		if (email.length === 0) {
 			errorMsg = '邮箱不能为空';
-		} else if (!pwd || pwd.length < 6) {
-			errorMsg = '密码长度至少6位';
+		//} else if (!pwd || pwd.length < 3) {
+		//	errorMsg = '密码长度至少3位';
 		} else {
 			that.$loginBtn.html('登录中...').attr('disabled', 'disabled');
 			that.requestLogin.call(that, email, pwd);

@@ -11,7 +11,8 @@ var y2wIMBridge = function(user){
         text: 0,
         file: 1,
         singleavcall: 2,//单人 音视频 
-        groupacall: 3//多人音视频
+        groupacall: 3,//多人音视频
+        system:10
     };
 
     this.syncTypes = {
@@ -431,6 +432,12 @@ y2wIMBridge.prototype.handleSendMessage = function(){
                         that.handleSendMessage();
                 });
                 break;
+            case this.sendTypes.system:
+                this.handleSendSystemMessage(sendObj, function(){
+                    if(that.sendList.length > 0)
+                        that.handleSendMessage();
+                });
+                break;
             case this.sendTypes.file:
                 this.handleSendFileMessage(sendObj, function(){
                     if(that.sendList.length > 0)
@@ -463,9 +470,56 @@ y2wIMBridge.prototype.handleSendTextMessage = function(sendObj, cb){
     this.user.sessions.get(targetId, scene, function (err, session) {
         //创建消息对象
         var message = session.messages.createMessage({
-            sender: that.user.id,
+            sender: sendObj.sender || that.user.id,
             to: targetId,
             type: 'text',
+            content: { text: text },
+            status: 'storing'
+        });
+        session.messages.add(message);
+        var id = message.id;
+        //显示消息
+        if(options.showMsg)
+            options.showMsg(message);
+        //保存消息对象
+        session.messages.remote.store(message, function(err, msg){
+            if(err){
+                console.error(err);
+                if(options.storeMsgFailed)
+                    options.storeMsgFailed(id);
+                that.sendList.splice(0, 1);
+                cb();
+                return;
+            }
+
+            //发送通知
+            var imSession = that.transToIMSession(session);
+            var syncs = [
+                { type: that.syncTypes.userConversation },
+                { type: that.syncTypes.message, sessionId: imSession.id }
+            ];
+            that.sendMessage(imSession, syncs);
+
+            if(options.storeMsgDone)
+                options.storeMsgDone(id, session.type, targetId, msg);
+
+            that.sendList.splice(0, 1);
+            cb();
+        })
+    });
+};
+y2wIMBridge.prototype.handleSendSystemMessage = function(sendObj, cb){
+    var targetId = sendObj.targetId,
+        scene = sendObj.scene,
+        text = sendObj.text,
+        options = sendObj.options || nop,
+        that = this;
+    this.user.sessions.get(targetId, scene, function (err, session) {
+        //创建消息对象
+        var message = session.messages.createMessage({
+            sender: sendObj.sender || that.user.id,
+            to: targetId,
+            type: 'system',
             content: { text: text },
             status: 'storing'
         });
@@ -567,6 +621,17 @@ y2wIMBridge.prototype.sendTextMessage = function(targetId, scene, text, options)
     });
 };
 
+y2wIMBridge.prototype.sendSystemMessage = function(targetId, scene, text, options){
+    this.addToSendList({
+        sender:"system",
+        targetId: targetId,
+        scene: scene,
+        text: text,
+        options: options,
+        type: this.sendTypes.system
+    });
+};
+
 y2wIMBridge.prototype.onImageLoadSuccess = function(targetId, scene, options, cb, e){
     var that = this;
     options = options || nop;
@@ -660,8 +725,8 @@ y2wIMBridge.prototype.onFileLoadSuccess = function(targetId, scene, options,name
         if(options.showMsg)
             options.showMsg(message);
         //上传图片
-        var fileName = guid() + '.png';
-        that.user.attchments.uploadBase64(fileName,"application/octet-stream", e.target.result, function(err, data) {
+        var fileName =name;
+        that.user.attchments.uploadBase64("application/octet-stream",fileName, e.target.result, function(err, data) {
             if (err) {
                 console.error(err);
                 if (options.storeMsgFailed)

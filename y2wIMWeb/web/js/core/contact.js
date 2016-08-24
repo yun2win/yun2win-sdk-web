@@ -100,7 +100,7 @@ contactsRemote.prototype.add = function(userId, name, cb) {
     var params = {
         userId: userId,
         name: name
-    }
+    };
     baseRequest.post(url, params, that.contacts.user.token, function(err, data){
         if(err){
             cb(err);
