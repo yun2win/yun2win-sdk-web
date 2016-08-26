@@ -412,6 +412,8 @@ var y2w = {
                             return;
                         }
                         that.cbAddFriend();
+                        y2w.tab.contactPanel.render();
+
                     })
                 })
             })
@@ -464,7 +466,10 @@ var y2w = {
                 this.$addFriendBox.find(".tip").html("不能添加自己！");
                 this.$addFriendBox.attr('class',"m-dialog done");   
             }else{
-                var isFriend = !!currentUser.contacts.get(user.id);
+                var c=currentUser.contacts.get(user.id);
+                var isFriend=!!c;
+                if(c.isDelete)
+                    isFriend=false;
                 this.$addFriendBox.addClass(isFriend?"friend":"noFriend");
             }
             

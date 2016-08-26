@@ -569,7 +569,7 @@ chatInfo.prototype.toggleRemoveChatMember = function(){
                 $dom.find('.remove').off('click').removeClass('hide').on('click', function(){
                     that.gotoRemoveChatMembers($(this).parent().attr('userId'));
                     that.toggleChatInfo();
-                })
+                });
             }
         }
         this.removable = true;
