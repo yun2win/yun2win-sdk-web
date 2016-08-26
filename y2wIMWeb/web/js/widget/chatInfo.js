@@ -151,7 +151,7 @@ chatInfo.prototype.showUserInfo=function(e){
     if(right.canShowManagerOper && account!=currentUser.id ){
         var member=currentUser.currentSession.members.getMember(account);
         $('<div class="u-card-btn">转让群主</div>').on('click',this.moveMasterRole.bind(this,account)).appendTo(btns);
-        if(member.role!="manager")
+        if(member.role!="admin")
             $('<div class="u-card-btn">设定管理员</div>').on('click',this.setManagerRole.bind(this,account)).appendTo(btns);
         else
             $('<div class="u-card-btn">移除管理员</div>').on('click',this.removeManagerRole.bind(this,account)).appendTo(btns);
@@ -229,16 +229,16 @@ chatInfo.prototype.buildChatMemberUI = function(member){
     var role=null;
     var roleTitle="";
     if(member.role=="master") {
-        role = "主";
+        role = "群主";
         roleTitle="群主"
     }
-    else if(member.role=="manager") {
-        role = "理";
+    else if(member.role=="admin") {
+        role = "管理";
         roleTitle="管理员";
     }
 
 
-    html += '</span><span class="name">'+(role?'<i title="'+roleTitle+'" class="role">'+role+'</i>':'')+'' + name + '</span></div>';
+    html += '</span>'+(role?'<i title="'+roleTitle+'" class="role">'+role+'</i>':'')+'<span class="name">' + name + '</span></div>';
     var $dom = $(html);
     return $dom;
 };
@@ -327,7 +327,7 @@ chatInfo.prototype.removeUserSession = function(id, cb){
             })
         });
     }
-}
+};
 
 /**
  * 添加群组会话成员
@@ -474,7 +474,7 @@ chatInfo.prototype.addChatMembers = function(){
         }
     }
     y2w.selector.show(selectorConf);
-}
+};
 chatInfo.prototype.callGroupMembers = function (scene, mode,userid) {
     var that = this;
     if (scene === 'p2p') {
@@ -507,7 +507,7 @@ chatInfo.prototype.callGroupMembers = function (scene, mode,userid) {
     }
     y2w.selector.show(selectorConf);
     }
-}
+};
 chatInfo.prototype.gotoRemoveChatMembers = function(userId){
     //var that = this;
     var member = currentUser.currentSession.members.getMember(userId);
@@ -548,7 +548,7 @@ chatInfo.prototype.gotoRemoveChatMembers = function(userId){
             })
         });
     })
-}
+};
 chatInfo.prototype.toggleRemoveChatMember = function(){
     var that = this;
     if(this.removable){
@@ -574,7 +574,7 @@ chatInfo.prototype.toggleRemoveChatMember = function(){
         }
         this.removable = true;
     }
-}
+};
 chatInfo.prototype.toggleFavorite = function(){
     var that = this;
     var userSession = currentUser.userSessions.get(currentUser.currentSession.id);
@@ -614,7 +614,7 @@ chatInfo.prototype.toggleFavorite = function(){
             });
         })
     }
-}
+};
 chatInfo.prototype.quit = function(){
     if(currentUser.currentSession.type == 'p2p'){
         if (!confirm('确认删除该联系人?'))
@@ -626,7 +626,7 @@ chatInfo.prototype.quit = function(){
             return;
         this.gotoQuitGroup(this);
     }
-}
+};
 chatInfo.prototype.removeContact = function(contact, cb){
     if (!contact) {
         cb();
@@ -649,7 +649,7 @@ chatInfo.prototype.removeContact = function(contact, cb){
             cb();
         });
     })
-}
+};
 chatInfo.prototype.removeUserConversation = function(userConversation, cb){
     if (!userConversation){
         cb();
@@ -672,7 +672,7 @@ chatInfo.prototype.removeUserConversation = function(userConversation, cb){
             cb();
         });
     })
-}
+};
 chatInfo.prototype.gotoRemoveContact = function(){
     var that = this;
     var userId = currentUser.currentSession.members.getP2POtherSideMember(currentUser.id).user.id;
@@ -696,7 +696,7 @@ chatInfo.prototype.gotoRemoveContact = function(){
             y2w.$rightPanel.find('.chat-box').addClass('hide');
         })
     })
-}
+};
 /**
  * 退群
  * @param that
@@ -748,7 +748,7 @@ chatInfo.prototype.gotoQuitGroup = function(){
             })
         })
     })
-}
+};
 chatInfo.prototype.editContactTitle = function(that, status, value){
     if(status == 'ok' && that.$editContactTitle.find('span.text').text() != value){
         var user = currentUser.currentSession.members.getP2POtherSideMember(currentUser.id).user;
@@ -803,7 +803,7 @@ chatInfo.prototype.editContactTitle = function(that, status, value){
             });
         })
     }
-}
+};
 chatInfo.prototype.editGroupTitle = function(that, status, value){
     if(status == 'ok' && that.$editGroupTitle.find('span.text').text() != value){
         var session = currentUser.currentSession ;
@@ -877,7 +877,7 @@ chatInfo.prototype.moveMasterRole=function(account){
 
     var that=this;
     this.changeRole(account,"master",function(){
-        this.changeRole(currentUser.id,"user",function(){
+        that.changeRole(currentUser.id,"admin",function(){
             var members=currentUser.currentSession.members;
             var member=members.getMember(account);
             y2w.sendSystemMessage(currentUser.name+"转让群主给"+member.name);
@@ -890,7 +890,7 @@ chatInfo.prototype.moveMasterRole=function(account){
 chatInfo.prototype.setManagerRole=function(account){
     //var member=currentUser.currentSession.members.getMember(account);
     var that=this;
-    this.changeRole(account,"manager",function(){
+    this.changeRole(account,"admin",function(){
         var members=currentUser.currentSession.members;
         var member=members.getMember(account);
         y2w.sendSystemMessage(currentUser.name+"设"+member.name+"为管理员");

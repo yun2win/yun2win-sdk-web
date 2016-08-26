@@ -244,19 +244,21 @@ var CurrentUser = function(obj){
     this.imToken = obj['imToken'];
     this.userConversations = new UserConversations(this);
     this.contacts = new Contacts(this);
+    this.emojis = new Emojis(this);
     this.sessions = new Sessions(this);
     this.userSessions = new UserSessions(this);
     this.attchments = new Attachments(this);
     this.remote = currentUserRemoteSingleton.getInstance(this);
     this.currentSession;
     this.y2wIMBridge;
-}
+};
 CurrentUser.prototype = new User({});
 CurrentUser.prototype.init = function(){
     this.userConversations.init();
     this.contacts.init();
     this.sessions.init();
     this.userSessions.init();
+    this.emojis.init();
 };
 CurrentUser.prototype.logout = function(cb){
     try {

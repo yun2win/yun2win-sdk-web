@@ -10,6 +10,8 @@ var y2w = {
         this.chatInfo = new chatInfo();
         this.selector = new selector();
         this.userInfo = new userInfo();
+        this.maper = new maper();
+        this.emojier = new emojier();
         this.addEvent();
         this.tab = new tab();
         this.chooseAvatar = new chooseAvatar();
@@ -18,6 +20,7 @@ var y2w = {
         //显示用户会话
         this.tab.userConversationPanel.render();
         this.chat = new chat();
+        this.chat.contextmenu(this.$chatContent);
 
         //同步用户会话，联系人与群
         setTimeout(function(){
@@ -30,6 +33,9 @@ var y2w = {
                     },
                     function(cb) {
                         that.syncUserSessions(cb);
+                    },
+                    function(cb) {
+                        that.syncEmojis(cb);
                     }],
                 function(err, results) {
                     if(err){
@@ -72,6 +78,7 @@ var y2w = {
         this.$personCard = $('#personCard');
         this.$teamInfo = $('#j-teamInfo');
         this.$chooseFileBtn = $('#j-msgType');
+        this.$openEmojiBtn = $('#j-emoji');
         this.$fileInput = $('#j-uploadFile');
         this.$cloudMsgContainer = $('#j-cloudMsgContainer');
         this.$devices = $("#j-devices");        
@@ -86,6 +93,7 @@ var y2w = {
         this.$sendBtn.on('click', this.sendTextMessage.bind(this));
         this.$messageText.on('keydown', this.inputMessage);
         this.$chooseFileBtn.on('click', 'a', this.chooseFile.bind(this)); 
+        this.$openEmojiBtn.on('click', 'a', this.openEmoji.bind(this));
         this.$fileInput.on('change', this.sendFileMessage.bind(this));
 
         this.$addFriend.on('click',this.showAddFriend.bind(this));
@@ -620,6 +628,9 @@ var y2w = {
     chooseFile: function () {
        this.$fileInput.click();
     },
+    openEmoji: function () {
+       this.emojier.show();
+    },
     syncUserConversations: function(cb){
         cb = cb || nop
         var that = this;
@@ -649,8 +660,10 @@ var y2w = {
                 }
                 that.clearUnRead(currentUser.currentSession.getConversation());
 
-                if(messages)
-                    that.appendMsgs(messages);
+                if(messages) {
+                    //that.appendMsgs(messages);
+                    that.updateMessages(messages);
+                }
 
                 //that.buildMsgs(session.messages.getMessages());
                 cb();
@@ -670,6 +683,17 @@ var y2w = {
             }
             if(count > 0 && that.tab.curTabType == that.tab.tabType.group)
                 that.tab.groupPanel.render();
+            cb();
+        });
+    },
+    syncEmojis: function(cb){
+        cb = cb || nop
+        var that = this;
+        currentUser.emojis.remote.sync(function(err, count){
+            if(err){
+                cb(err);
+                return;
+            }
             cb();
         });
     },
@@ -1035,6 +1059,26 @@ var y2w = {
                 })
             }
         })
+    },
+    updateMessages: function(messages){
+        var that = this;
+        for(var i = 0; i < messages.length; i++){
+            var $dom = that.$chatContent.find('div[data-id=' + messages[i].id + ']');
+            if(!$dom || $dom.length == 0){
+                var msgHtml = this.chat.updateChatContentUI(messages[i]);
+                this.$chatContent.append(msgHtml);
+            }
+            else{
+                var msgHtml = this.chat.updateChatContentUI(messages[i]);
+                $dom.after(msgHtml);
+                $dom.prev("p").remove();
+                $dom.remove();
+                //console.log(messages[i]);
+            }
+        }
+        //var temp = appUI.buildChatContentUI(messages);
+        //that.$chatContent.html(temp);
+        that.$chatContentWrap.scrollTop(99999);
     },
     appendMsgs: function(messages){
         var that = this;

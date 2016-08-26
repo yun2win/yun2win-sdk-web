@@ -48,7 +48,7 @@ var Sessions = function(user){
                 cb(null, session);
             }
             else if(type == 'single'){
-                that.remote.add('single', that.user.name, 'private', that.user.avatarUrl, function(err, session){
+                that.remote.getSingle(that.user.id, function(err, session){
                     if(err){
                         cb(err);
                         return;
@@ -59,8 +59,8 @@ var Sessions = function(user){
             }
             else
                 cb();
-        })
-    }
+        });
+    };
     /**
      * 根据SessionId获取本地会话
      * @param id
@@ -68,7 +68,7 @@ var Sessions = function(user){
      */
     this.getById = function(id){
         return _sessionList[id];
-    }
+    };
     /**
      * 获取会话目标id
      * type=='p2p':targetId=user.id(对方用户);
@@ -83,7 +83,7 @@ var Sessions = function(user){
                 return k.replace(type + '-', '');
         }
         throw "targetId is not exist";
-    }
+    };
     this.add = function(targetId, obj){
         var session = _targetList[obj.type + '-' + targetId];
         if(!session)
@@ -94,13 +94,17 @@ var Sessions = function(user){
         _sessionList[session.id] = session;
         _localStorage.setList(_targetList);
         return session;
-    }
+    };
     this.remove = function(session){
         var targetId = this.getTargetId(session.id, session.type);
         delete _targetList[session.type + '-' + targetId];
         delete _sessionList[session.id];
         _localStorage.setList(_targetList);
-    }
+    };
+
+    this._getMeSingle=function(){
+
+    };
 }
 var sessionsLocalStorage = function(sessions){
     this.sessions = sessions;
@@ -182,6 +186,19 @@ sessionsRemote.prototype.add = function(type, name, secureType, avatarUrl, cb){
         cb(null, session);
     })
 }
+sessionsRemote.prototype.getSingle = function(userid, cb){
+    var that = this;
+    cb = cb || nop;
+    var url = 'sessions/single/'+userid;
+    baseRequest.get(url, new Date(1900,1,1).getTime(), that.sessions.user.token, function(err, data){
+        if(err){
+            cb(err);
+            return;
+        }
+        var session = that.sessions.createSession(data);
+        cb(null, session);
+    });
+};
 /**
  * 更新会话信息
  * @param session
@@ -258,8 +275,14 @@ Session.prototype.toJSON = function(){
  */
 Session.prototype.getConversation = function(){
     if(this.type == 'p2p'){
-        var member = this.members.getP2POtherSideMember(this.sessions.user.id);
-        return this.sessions.user.userConversations.get(this.type, member.user.id);
+        try {
+            var member = this.members.getP2POtherSideMember(this.sessions.user.id);
+            return this.sessions.user.userConversations.get(this.type, member.user.id);
+        }
+        catch(e){
+            //如果只有一个人,试试直接找自己跟自己的会话
+            return this.sessions.user.userConversations.get(this.type, this.sessions.user.id);
+        }
     }
     else if(this.type == 'group'){
         return this.sessions.user.userConversations.get(this.type, this.id);

@@ -106,6 +106,9 @@
                     </div>
 					<div class="chat-mask"></div>
 					<div class="chat-editor box-sizing" id="j-chatEditor" data-disabled="1">
+                        <span class="msg-type" id="j-emoji">
+                            <a href="javascript:;" class="icon icon-emoji"></a>
+                        </span>
 						<span class="msg-type" id="j-msgType">
 							<a href="javascript:;" class="icon icon-file" data-type="file"></a>
 						</span>
@@ -122,6 +125,16 @@
 						<a href="javascript:;" class="btn-send radius4px" id="j-sendBtn">发送</a>
 					</div>
 				</div>
+                <div class="emoji-card" id="emojier">
+                    <div class="emoji-card-body">
+                        <div class="emoji-item">
+
+                        </div>
+                    </div>
+                    <div class="emoji-card-tabs">
+                        <div class="emoji-card-tab"></div>
+                    </div>
+                </div>
 			</div>
 		</div>
 	</div>
@@ -195,6 +208,7 @@
 			<button class="btn btn-del radius4px blacklist j-blacklist">移出黑名单</button>
 		</div>		
 	</div>
+
     <!-- 用户卡片 -->
     <div class="hide" id="userInfo">
         <div class="u-card-over"></div>
@@ -277,6 +291,7 @@
 	<!-- js-->
 	<script src="js/3rd/jquery-1.7.1.min.js"></script>
 	<script src="js/3rd/jquery-ui-datepicker.js"></script>
+    <script src="js/3rd/jquery.contextmenu.js?v=0.1"></script>
     <script src="js/3rd/jquery.cropit.js"></script>
     <script src="js/3rd/async.js"></script>
     <script src="js/3rd/ajaxFileUpload.js"></script>
@@ -287,6 +302,7 @@
     <script src="js/core/user.js?v=0.1"></script>
     <script src="js/core/userConversation.js?v=0.1"></script>
     <script src="js/core/contact.js?v=0.1"></script>
+    <script src="js/core/emoji.js?v=0.1"></script>
     <script src="js/core/message.js?v=0.1"></script>
     <script src="js/core/userSession.js?v=0.1"></script>
     <script src="js/core/sessionMember.js?v=0.1"></script>
@@ -299,6 +315,8 @@
     <script src="js/widget/chooseAvatar.js?v=0.1"></script>
     <script src="js/widget/chatInfo.js?v=0.1"></script>
     <script src="js/widget/userInfo.js?v=0.1"></script>
+    <script src="js/widget/emojier.js?v=0.1"></script>
+    <script src="js/widget/maper.js?v=0.1"></script>
     <script src="js/widget/selector.js?v=0.1"></script>
     <script src="js/widget/chat.js?v=0.1"></script>
 
@@ -322,6 +340,16 @@
     </div>
     <link rel="stylesheet" href="js/3rd/blueimp/dest/blueimp-gallery.min.css"/>
     <script src="js/3rd/blueimp/dest/jquery.blueimp-gallery.min.js"></script>
+
+
+    <!--地理位置-->
+    <div id="mapContainer" class="hide">
+        <div class="map-over"></div>
+        <div id="container"></div>
+        <div class="map-close">×</div>
+    </div>
+    <script type="text/javascript" src="http://webapi.amap.com/maps?v=1.3&key=83007dcd721230f38cbe90c94a8d121c"></script>
+
 
 </body>
 </html>

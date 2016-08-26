@@ -39,7 +39,7 @@ chat.prototype.makeChatContent = function(message){
         message.from={};
     //通知类消息
     if (message.type == 'system') {
-        msgHtml =  '<div class="u-notice tc item" data-time="'+ message.createdAt +'" data-id="'+ message.id +'"><span class="radius5px">'+message.content.text+'</span></div>';
+        msgHtml =  '<div class="u-notice tc item" data-time="'+ message.createdAt +'" data-id="'+ message.id +'"><span class="radius5px">'+(message.content.text || message.content)+'</span></div>';
     }else{
         //聊天消息
         var type = message.type,
@@ -68,7 +68,14 @@ chat.prototype.makeChatContent = function(message){
                 contentDOM += this.getMessage(message);
                 contentDOM += '</div></div></div>';
                 break;
+            case 'audio':
+                contentDOM = '<div class="msg"><div class="box"><div class="cnt">';
+                contentDOM += this.getMessage(message);
+                contentDOM += '</div></div></div>';
+                break;
             case 'image':
+            case 'video':
+            case 'location':
                 contentDOM = '<div class="image">';
                 contentDOM += this.getMessage(message);
                 contentDOM += '</div>';
@@ -89,6 +96,7 @@ chat.prototype.makeChatContent = function(message){
             contentDOM,
             message.status === "storing"?'<span class="storing"></span>':'',
             message.status === "fail"?'<span class="error"><i class="icon icon-error"></i>发送失败</span>':'',
+
             '</div>'].join('');
     }
     return msgHtml;
@@ -100,7 +108,7 @@ chat.prototype.makeChatContent = function(message){
 chat.prototype.buildSender = function(msg) {
     var sender = '';
     var from = msg.from.userId || msg.from.id;
-    var to = msg.to.userId || msg.to.id;
+    var to =msg.to?(msg.to.userId || msg.to.id):'';
     if (from === to) {
         if (msg.fromClientType==="Web") {
             sender = 'me';
@@ -130,14 +138,31 @@ chat.prototype.getMessage = function(msg) {
             str = _$escape(text);
             str = str.replace(re, "<a href='$1' target='_blank'>$1</a>");
 
-            str ="<div class='default-width'>"+str+"</div>"
+            var matchs=str.match(/\[[^\]]{1,5}\]/ig);
+            if(matchs)
+            for(var i=0;i<matchs.length;i++){
+                var k=matchs[i];
+                var ename= k.replace("[","").replace("]","");
+                var emoji=currentUser.emojis.get(ename);
+                if(!emoji)
+                    continue;
+
+                str=str.replace(k,"<img class='emoji' src='"+emoji.getUrl()+"'/>")
+
+            }
+
+
+            str ="<div class='default-width'>"+str+"</div>";
             break;
+
         case 'image':
             var src;
             if(msg.content.base64 == undefined)
-                src = parseAttachmentUrl(msg.content.src,currentUser.token);//config.baseUrl + msg.content.src + '?access_token=' + currentUser.token;
+                src = parseAttachmentUrl(msg.content.thumbnail,currentUser.token);//config.baseUrl + msg.content.src + '?access_token=' + currentUser.token;
             else
                 src = msg.content.base64;
+
+            var tsrc=parseAttachmentUrl(msg.content.src,currentUser.token);
             var maxWidth = 290;
             var width;
             var height;
@@ -150,10 +175,37 @@ chat.prototype.getMessage = function(msg) {
                     height = parseInt(msg.content.height * maxWidth / msg.content.width);
                     width = maxWidth;
                 }
-                str = '<a href="' + src + '" data-thumbnail="' + src + '" data-gallery="message"><img src="' + src + '" style="width:' + width + 'px; height:' + height + 'px" /></a>';
+                str = '<a href="' + tsrc + '" data-thumbnail="' + src + '" data-gallery="message"><img src="' + src + '" style="width:' + width + 'px; height:' + height + 'px" /></a>';
             }
             else
-                str = '<a href="' + src + '" data-thumbnail="' + src + '" data-gallery="message"><img src="' + src + '" /></a>';
+                str = '<a href="' + tsrc + '" data-thumbnail="' + src + '" data-gallery="message"><img src="' + src + '" /></a>';
+
+            //if(msg.status === -1){
+            //    str = '<p>['+msg.message.message+']</p>';
+            //}else{
+            //    msg.file.url = _$escape(msg.file.url);
+            //    str = '<a href="' + msg.file.url + '?imageView" target="_blank"><img onload="loadImg()" data-src="' + msg.file.url + '" src="' + msg.file.url + '?imageView&thumbnail=200x0&quality=85"/></a>';
+            //}
+            break;
+        case 'location':
+            var src = parseAttachmentUrl(msg.content.thumbnail,currentUser.token);//config.baseUrl + msg.content.src + '?access_token=' + currentUser.token;
+
+            var maxWidth = 290;
+            var width;
+            var height;
+            if(msg.content.width){
+                if(msg.content.width < maxWidth){
+                    width = msg.content.width;
+                    height = msg.content.height;
+                }
+                else{
+                    height = parseInt(msg.content.height * maxWidth / msg.content.width);
+                    width = maxWidth;
+                }
+                str = '<a onclick="y2w.maper.show('+msg.content.longitude+','+msg.content.latitude+')"  ><img src="' + src + '" style="width:' + width + 'px; height:' + height + 'px" /></a>';
+            }
+            else
+                str = '<a  onclick="y2w.maper.show('+msg.content.longitude+','+msg.content.latitude+')"  ><img src="' + src + '" /></a>';
 
             //if(msg.status === -1){
             //    str = '<p>['+msg.message.message+']</p>';
@@ -230,19 +282,37 @@ chat.prototype.getMessage = function(msg) {
             //}
             break;
         case 'video':
-            // str = '<a href="' + url + '" target="_blank" class="download-file"><span class="icon icon-file2"></span>[你收到了一条视频消息]</a>';
-            str= '<video src= "'+url+'" controls>您的浏览器不支持 video 标签。</video>';
+            var src= parseAttachmentUrl(msg.content.thumbnail,currentUser.token);
+            var tsrc=parseAttachmentUrl(msg.content.src,currentUser.token);
+            tsrc=tsrc.replace("/content?","/content/"+msg.content.name+"?");
+            var maxWidth = 290;
+            var width;
+            var height;
+            if(msg.content.width){
+                if(msg.content.width < maxWidth){
+                    width = msg.content.width;
+                    height = msg.content.height;
+                }
+                else{
+                    height = parseInt(msg.content.height * maxWidth / msg.content.width);
+                    width = maxWidth;
+                }
+                str = '<a title="'+(msg.content.name||'') +'" href="' + tsrc + '" type="video/mp4" data-poster="' + src + '" data-gallery="message"><img src="' + src + '" style="width:' + width + 'px; height:' + height + 'px" /></a>';
+            }
+            else
+                str = '<a title="'+(msg.content.name||'') +'"  href="' + tsrc + '" type="video/mp4" data-poster="' + src + '" data-gallery="message"><img src="' + src + '" /></a>';
 
             break;
         case 'audio':
             if(!!window.Audio){
-                if(msg.from === userUID&&msg.from!==msg.to){
-                    str ='<div class="u-audio j-mbox right"> <a href="javascript:;" class="j-play playAudio" data-dur="'+msg.file.dur+'"  data-src="'+ url+'">点击播放</a><b class="j-duration">'+Math.floor((msg.file.dur)/1000)+'"</b><span class="u-icn u-icn-play" title="播放音频"></span></div>'
+                var src= parseAttachmentUrl(msg.content.src,currentUser.token);
+                if(msg.from === currentUser.id&&msg.from!==msg.to){
+                    str ='<div class="u-audio j-mbox right"> <a href="javascript:;" class="j-play playAudio" data-dur="'+msg.content.second+'"  data-src="'+ src+'">点击播放</a><b class="j-duration">'+Math.floor((msg.content.second))+'"</b><span class="u-icn u-icn-play" title="播放音频"></span></div>'
                 }else{
-                    str ='<div class="u-audio j-mbox left"> <a href="javascript:;" class="j-play playAudio" data-dur="'+msg.file.dur+'"  data-src="'+ url+'">点击播放</a><b class="j-duration">'+Math.floor((msg.file.dur)/1000)+'"</b><span class="u-icn u-icn-play" title="播放音频"></span></div>'
+                    str ='<div class="u-audio j-mbox left"> <a href="javascript:;" class="j-play playAudio" data-dur="'+msg.content.second+'"  data-src="'+ src+'">点击播放</a><b class="j-duration">'+Math.floor((msg.content.second))+'"</b><span class="u-icn u-icn-play" title="播放音频"></span></div>'
                 }
             }else{
-                str = '<a href="' + url + '" target="_blank" class="download-file"><span class="icon icon-file2"></span>['+sentStr+'一条语音消息]</a>';
+                str = '<a href="' + url + '" target="_blank" class="download-file"><span class="icon icon-file2"></span>[一条语音消息]</a>';
             }
             break;
         case 'geo':
@@ -270,3 +340,89 @@ chat.prototype.getMessage = function(msg) {
     }
     return str;
 }
+chat.prototype.contextmenu = function($div){
+
+    $div.contextPopup({
+        title: null,
+        items: [
+            {   label:'消息撤回',
+                check:function(e){
+                    var evt = e || window.event,
+                        target = evt.srcElement || evt.target;
+                    var doms=$(target).parents(".item");
+                    if(doms.attr("class") && doms.attr("class").indexOf("item-me")>=0){
+                        return true;
+                    }
+                    return false;
+                },
+                action:function(e) {
+                    //$(e.target).parents(".item").attr("data-id")
+                    var evt = e || window.event,
+                        target = evt.srcElement || evt.target;
+                    var doms=$(target).parents(".item");
+                    var id=doms.attr("data-id");
+                    var msg=currentUser.currentSession.messages.get(id);
+                    if(!msg)
+                        return;
+
+                    msg.content=currentUser.name+"撤回一条消息";
+                    msg.type="system";
+
+                    var mrmote=currentUser.currentSession.messages.remote;
+
+                    mrmote.update(msg,function(){
+                        y2w.syncMessages(currentUser.currentSession.getConversation(),true,function(){
+
+                            var imSession = currentUser.y2wIMBridge.transToIMSession(currentUser.currentSession);
+                            //发送通知
+                            var syncs = [
+                                {type: currentUser.y2wIMBridge.syncTypes.userConversation},
+                                {type: currentUser.y2wIMBridge.syncTypes.message, sessionId: imSession.id}
+                            ];
+                            currentUser.y2wIMBridge.sendMessage(imSession, syncs);
+
+                        });
+                    });
+                }
+            },
+            {   label:'引用',
+                check:function(e){
+                    var evt = e || window.event,
+                        target = evt.srcElement || evt.target;
+                    var doms=$(target).parents(".item");
+                    var id=doms.attr("data-id");
+                    if(!id)
+                        return false;
+                    var msg=currentUser.currentSession.messages.get(id);
+                    if(msg.type=="text")
+                        return true;
+                    return false;
+                },
+                action:function(e) {
+                    //$(e.target).parents(".item").attr("data-id")
+                    var evt = e || window.event,
+                        target = evt.srcElement || evt.target;
+                    var doms=$(target).parents(".item");
+                    var scene=doms.attr("data-scene");
+                    var id=doms.attr("data-id");
+
+                    var msg=currentUser.currentSession.messages.get(id);
+                    if(!msg)
+                        return;
+
+                    var name="";
+                    if(msg.from && msg.from.name)
+                        name=msg.from.name+": ";
+                    var text=msg.content;
+                    if(msg.content && msg.content.text)
+                        text=msg.content.text;
+                    var content="「"+name+text+"」\n—————————\n";
+                    y2w.$messageText.val(y2w.$messageText.val()+content);
+                    y2w.$messageText.focus();
+
+                    //alert('clicked 1');
+                }
+            }
+        ]
+    });
+};

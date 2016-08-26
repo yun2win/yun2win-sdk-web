@@ -8,12 +8,12 @@ var tab = function () {
         userConversation: 0,
         contact: 1,
         group: 2
-    }
+    };
     this.curTabType;
     this.userConversationPanel = new userConversationPanel(this);
     this.contactPanel = new contactPanel(this);
     this.groupPanel = new groupPanel(this);
-}
+};
 tab.prototype.switch = function (e) {
     var $this = $(e.currentTarget),
         $curTab = $this.find('span'),
@@ -32,12 +32,12 @@ tab.prototype.switch = function (e) {
             this.groupPanel.render();
             break;
     }
-}
+};
 tab.prototype.isActive = function (info) {
     if (y2w.prepSession)
         return y2w.prepSession.scene == info.scene && y2w.prepSession.id == info.id;
     return false;
-}
+};
 tab.prototype.getInfo = function (tabType, obj) {
     var info = {};
     switch (tabType) {
@@ -49,6 +49,7 @@ tab.prototype.getInfo = function (tabType, obj) {
             info.unread = userConversation.unread > 99 ? "99+" : userConversation.unread;
             info.lastMessage = userConversation.lastMessage ? this.renderLastMessage(userConversation.lastMessage) : '';
             info.name = userConversation.getName();
+            info.top=userConversation.top;
             info.avatarUrl = userConversation.getAvatarUrl();
             return info;
         case this.tabType.contact:
@@ -80,11 +81,16 @@ tab.prototype.getUnreadCount = function (info) {
     return count;
 };
 tab.prototype.renderLastMessage = function (msg) {
-    if (!msg || !msg.from)
+    if (!msg) {
         return '';
-    var text = (msg.scene != 'p2p' ? ((msg.from.id === currentUser.id) ? "我" : msg.from.name) + ":" : "");
+    }
+    if(!msg.from)
+        msg.from={};
+    var text='';
+    if(!!msg.from.name)
+        text = (msg.scene != 'p2p' ? ((msg.from.id === currentUser.id) ? "我" : msg.from.name) + ":" : "");
     var type = msg.type;
-    if (!/text|image|file|audio|video|geo|custom|notification/i.test(type)) return '';
+    if (!/text|image|file|audio|video|geo|custom|notification|system/i.test(type)) return '';
     switch (type) {
         case 'text':
             text += _$escape(msg.content.text || msg.content);
@@ -108,6 +114,9 @@ tab.prototype.renderLastMessage = function (msg) {
             break;
         case 'geo':
             text += '[位置]';
+            break;
+        case 'system':
+            text += _$escape(msg.content.text || msg.content);
             break;
         default:
             text += '[未知消息类型]';
@@ -182,6 +191,95 @@ var userConversationPanel = function (tab) {
             target = target.parentNode;
         }
     });
+
+    this.$list.contextPopup({
+        title: null,
+        items: [
+            {   label:'置顶',
+                check:function(e){
+                    var evt = e || window.event,
+                        target = evt.srcElement || evt.target;
+                    var doms=$(target).parents(".item");
+                    var scene=doms.attr("data-scene");
+                    var id=doms.attr("data-id");
+                    var uc = currentUser.userConversations.get(scene,id);
+                    return !uc.top;
+                },
+                action:function(e) {
+                //$(e.target).parents(".item").attr("data-id")
+                var evt = e || window.event,
+                    target = evt.srcElement || evt.target;
+                var doms=$(target).parents(".item");
+                var scene=doms.attr("data-scene");
+                var id=doms.attr("data-id");
+                var uc = currentUser.userConversations.get(scene,id);
+                if(uc){
+                    uc.top=true;
+                    var ucremote=currentUser.userConversations.remote;
+                    ucremote.updateTop(uc,function(error){
+                        ucremote.sync(function(){
+                            y2w.tab.userConversationPanel.render();
+                            currentUser.y2wIMBridge.sendToOtherDevice();
+                        });
+                    });
+                }
+
+                //alert('clicked 1');
+            } },
+            {   label:'取消置顶',
+                check:function(e){
+                    var evt = e || window.event,
+                        target = evt.srcElement || evt.target;
+                    var doms=$(target).parents(".item");
+                    var scene=doms.attr("data-scene");
+                    var id=doms.attr("data-id");
+                    var uc = currentUser.userConversations.get(scene,id);
+                    return uc.top;
+                },
+                action:function(e) {
+                    //$(e.target).parents(".item").attr("data-id")
+                    var evt = e || window.event,
+                        target = evt.srcElement || evt.target;
+                    var doms=$(target).parents(".item");
+                    var scene=doms.attr("data-scene");
+                    var id=doms.attr("data-id");
+                    var uc = currentUser.userConversations.get(scene,id);
+                    if(uc){
+                        uc.top=false;
+                        var ucremote=currentUser.userConversations.remote;
+                        ucremote.updateTop(uc,function(error){
+                            ucremote.sync(function(){
+                                y2w.tab.userConversationPanel.render();
+                                currentUser.y2wIMBridge.sendToOtherDevice();
+                            });
+                        });
+                    }
+
+                    //alert('clicked 1');
+                } },
+            null, // divider
+            {
+                label:'删除',
+                action:function(e) {
+                    var evt = e || window.event,
+                        target = evt.srcElement || evt.target;
+                    var doms=$(target).parents(".item");
+                    var scene=doms.attr("data-scene");
+                    var id=doms.attr("data-id");
+                    var uc = currentUser.userConversations.get(scene,id);
+                    if(uc){
+                        var ucremote=currentUser.userConversations.remote;
+                        ucremote.remove(uc.id,function(error){
+                            ucremote.sync(function(){
+                                y2w.tab.userConversationPanel.render();
+                                currentUser.y2wIMBridge.sendToOtherDevice();
+                            });
+                        })
+                    }
+                }
+            }
+        ]
+    });
 }
 userConversationPanel.prototype.render = function () {
     var html = '',
@@ -196,7 +294,7 @@ userConversationPanel.prototype.render = function () {
             info = this.tab.getInfo(this.tabType, list[i]);
             if (!info)
                 continue;
-            str = ['<li class="item' + (this.tab.isActive(info) ? ' active' : '') + '" data-scene="' + info.scene + '" data-id="' + info.id + '">',
+            str = ['<li class="item' + (this.tab.isActive(info) ? ' active' : '') + '' + (info.top ? ' top-item' : '') + '" data-scene="' + info.scene + '" data-id="' + info.id + '">',
                 this.tab.getAvatarDOM(info),
                 '<div class="item-text">',
                 '<p class="multi-row">',

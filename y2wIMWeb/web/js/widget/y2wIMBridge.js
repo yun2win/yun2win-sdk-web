@@ -812,3 +812,19 @@ y2wIMBridge.prototype.sendcallVideoMessage = function (targetId, scene, content)
         type: sendType
     });
 };
+
+y2wIMBridge.prototype.sendToOtherDevice=function(){
+    var that=this;
+    this.user.sessions.get(this.user.id, 'single', function(err, session) {
+        if (err) {
+            console.error(err);
+            return;
+        }
+        var imSession = that.transToIMSession(session);
+        //发送通知
+        var syncs = [
+            {type: that.syncTypes.userConversation}
+        ];
+        that.sendMessage(imSession, syncs);
+    });
+};

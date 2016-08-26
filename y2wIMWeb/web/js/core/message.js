@@ -24,6 +24,9 @@ Messages.prototype.count = function(){
 Messages.prototype.getMessages = function(){
     return this._list;
 }
+Messages.prototype.get = function(id){
+    return this._dic[id];
+}
 Messages.prototype.exist = function(id){
     return this._dic[id];
 }
@@ -70,7 +73,30 @@ messagesRemote.prototype.store = function(message, cb) {
         message.status = 'stored';
         cb(null, message);
     })
-}
+};
+messagesRemote.prototype.update = function(message, cb) {
+    cb = cb || nop;
+    var that = this;
+    var url = 'sessions/' + that.messages.session.id + '/messages/'+message.id;
+    var params = {
+        sender: message.sender,
+        content: JSON.stringify(message.content),
+        type: message.type
+    };
+    baseRequest.put(url, params, that.messages.session.sessions.user.token, function(err, data){
+        if(err){
+            cb(err);
+            message.status = 'storefailed';
+            //that.messages.add(message);
+            return;
+        }
+        message.id = data.id;
+        message.createdAt = new Date(data.createdAt).getTime();
+        message.updatedAt = new Date(data.updatedAt).getTime();
+        message.status = 'stored';
+        cb(null, message);
+    })
+};
 /**
  * 消息同步
  * 1. 获取同步消息
@@ -114,10 +140,17 @@ messagesRemote.prototype.sync = function(cb) {
             var list = [];
             for (var i = 0; i < data.entries.length; i++) {
                 var message = that.messages.createMessage(data.entries[i]);
-                if(that.messages.exist(message.id))
-                    continue;
-                that.messages.insert(insertIndex++, message);
                 list.push(message);
+                var exist=that.messages.exist(message.id);
+                if(exist){
+                    var omsg=that.messages.get(message.id);
+                    for(var index in message)
+                        omsg[index]=message[index];
+                    continue;
+                }
+
+                that.messages.insert(insertIndex++, message);
+
                 if (that.messages.updatedAt < message.updatedAt)
                     that.messages.updatedAt = message.updatedAt;
             }
@@ -137,13 +170,13 @@ messagesRemote.prototype.sync = function(cb) {
                         return;
                     }
                     cb(null, list);
-                })
+                });
             }
             else
                 cb(null, list);
         }
     })
-}
+};
 messagesRemote.prototype.getLastMessages = function(cb){
     cb = cb || nop;
     var that = this;
@@ -172,8 +205,7 @@ messagesRemote.prototype.getLastMessages = function(cb){
             that.messages.more = true;
         cb(null, list);
     })
-}
-
+};
 
 var Message = function(messages, obj){
     this.messages = messages;
