@@ -2333,7 +2333,7 @@ body {
 .search .input .search-close{
     position: absolute;
     z-index: 1;
-    right: 45px;
+    right: 15px;
     color: #fff;
     width: 30px;
     line-height: 29px;
