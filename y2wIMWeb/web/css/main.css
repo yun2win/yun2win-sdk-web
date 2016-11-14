@@ -1865,6 +1865,7 @@ body {
     float: left;
     margin-right: 10px;
     line-height: 40px;
+    margin-top:10px;
 }
 .selector .list-item .opt i{
     width: 20px;
