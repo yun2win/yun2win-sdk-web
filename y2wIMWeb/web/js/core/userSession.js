@@ -37,7 +37,8 @@ var UserSessions = function(user){
             foo.push(_list[k]);
         }
         return foo;
-    }
+    };
+
     this.addUserSessions = function(list){
         for(var i = 0; i < list.length; i++){
             var userSession = this._add(list[i]);

@@ -7,7 +7,7 @@ var addEvent = function(node, type, callback){
     }else{
         node.attachEvent("on" + type, callback);
     }
-}
+};
 /**
  * 时间戳转化为日期（用于消息列表）
  * @return {string} 转化后的日期
@@ -131,7 +131,7 @@ var _$escape = (function(){
     var _reg = /<br\/?>$/,
         _map = {
             r:/\<|\>|\&|\r|\n|\s|\'|\"/g,
-            '<':'&lt;','>':'&gt;','&':'&amp;',' ':'&nbsp;',
+            '<':'&lt;','>':'&gt;','&':'&amp;','  ':'&nbsp; ',
             '"':'&quot;',"'":'&#39;','\n':'<br/>','\r':''
         };
     return function(_content){
@@ -150,7 +150,6 @@ Array.prototype.each = function(fn){
     }
     return a;
 };
-
 //数组是否包含指定元素
 Array.prototype.contains = function(suArr){
     for(var i = 0; i < this.length; i ++){
@@ -191,4 +190,33 @@ var guid = function() {
         return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
     };
     return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
-}
+};
+
+var _console=console;
+var _debug=true;
+console = {
+    log:function(msg) {
+        if(_debug)
+        _console.log(msg);
+    },
+    error:function(msg){
+        if(_debug)
+        _console.error(msg);
+    },
+    warn:function(msg){
+        if(_debug)
+            _console.warn(msg);
+    },
+    info:function(msg){
+        if(_debug)
+            _console.info(msg);
+    }
+
+};
+
+var y2wInherits = function(ctor, superCtor) {
+    ctor.super_ = superCtor;
+    ctor.prototype = Object.create(superCtor.prototype, {
+        constructor: { value: ctor, enumerable: false }
+    });
+};

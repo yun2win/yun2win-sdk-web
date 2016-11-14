@@ -9,8 +9,10 @@ var Users = (function(){
         this.remote = usersRemoteSingleton.getInstance(this);
 
         this.getCurrentUser = function(){
-            if(this.localStorage.getCurrentUserId() == null)
+            if(this.localStorage.getCurrentUserId() == null) {
+                location.href="index.html";
                 throw 'currentUserId is null, pls relogin!';
+            }
             if(!_list){
                 _list = this.localStorage.getUsers(this.localStorage.getCurrentUserId());
                 for(var k in _list){
@@ -18,13 +20,13 @@ var Users = (function(){
                 }
                 var info = this.localStorage.getCurrentUserInfo();
                 info.account = info.account || info.email;
-                var user = new CurrentUser(info);
+                var user = new CurrentUser(info,this);
                 _list[user.id] = user;
                 user.init();
                 this.localStorage.setUsers(_list);
             }
             return this.get(user.id);
-        }
+        };
         this.get = function(id){
             return _list[id];
         }
@@ -45,7 +47,8 @@ var Users = (function(){
                 this.localStorage.setUsers(_list);
                 return user;
             }
-        }
+        };
+
     }
     return{
         getInstance: function(){
@@ -93,7 +96,7 @@ var usersLocalStorageSingleton = (function(){
         }
         this.setUsers = function(users){
             localStorage.setItem(this.getCurrentUserId() + '_users', JSON.stringify(users));
-        }
+        };
     }
     return{
         getInstance: function(users, list){
@@ -118,7 +121,7 @@ var usersRemoteSingleton = (function(){
                 name: name
             };
             baseRequest.post(url, params, null, cb);
-        }
+        };
         this.login = function(account, password, cb){
             cb = cb || nop;
             var url = 'users/login';
@@ -131,6 +134,7 @@ var usersRemoteSingleton = (function(){
                     cb(err);
                     return;
                 }
+                data._login={a:account,p:MD5(password)};
                 _users.localStorage.setCurrentUserId(data.id);
                 _users.localStorage.setCurrentUserInfo(data);
                 cb(null, data);
@@ -149,6 +153,36 @@ var usersRemoteSingleton = (function(){
                     var user = _users.get(info.id);
                     if(!user)
                         user = _users.create(info.id, info.name, info.email, info.avatarUrl);
+                    cb(null, user);
+                }
+                else
+                    cb(null, null);
+            });
+        };
+        this.get = function(id, token, cb){
+            cb = cb || nop;
+            var url = 'users/' + id;
+            baseRequest.get(url, null, currentUser.token, function(err, obj){
+                if(err){
+                    cb(err);
+                    return;
+                }
+                if(obj){
+                    var info =obj;
+                    var user = _users.get(info.id);
+
+                    if(!user)
+                        user = _users.create(info.id, info.name, info.email, info.avatarUrl);
+                    else{
+                        user.id=info.id;
+                        user.name=info.name;
+                        user.account=info.email;
+                        user.avatarUrl=info.avatarUrl;
+                        user.date=new Date();
+                        if(!user.avatarUrl || user.avatarUrl.indexOf('/images/default.jpg') >= 0)
+                            user.avatarUrl = ' ';
+                        _users.localStorage.setUsers(_users.getUsers());
+                    }
                     cb(null, user);
                 }
                 else
@@ -180,7 +214,7 @@ var User = function(obj){
     this.status = obj['status'];
     this.createdAt = obj['createdAt'] || globalMinDate;
     this.updatedAt = obj['updatedAt'] || globalMinDate;
-}
+};
 User.prototype.toJSON = function(){
     return {
         id: this.id,
@@ -196,36 +230,42 @@ User.prototype.toJSON = function(){
         createdAt: this.createdAt,
         updatedAt: this.updatedAt
     }
-}
-
+};
 User.prototype.getAvatarUrl = function(){
     if(this.avatarUrl && $.trim(this.avatarUrl) != '' && $.trim(this.avatarUrl) != '..')
-        return config.baseUrl + this.avatarUrl + '?access_token=' + currentUser.token;
+        return parseAttachmentUrl(this.avatarUrl,currentUser.token);
+        //return config.baseUrl + this.avatarUrl + '?access_token=' + currentUser.token;
     return null;
-}
+};
 
-var CurrentUser = function(obj){
+var CurrentUser = function(obj,users){
     User.call(this, obj);
+
+    this.users=users;
+    this._login=obj._login;
     this.appKey = obj['key'];
     this.secret = obj['secret'];
     this.token = obj['token'];
     this.imToken = obj['imToken'];
     this.userConversations = new UserConversations(this);
     this.contacts = new Contacts(this);
+    this.emojis = new Emojis(this);
     this.sessions = new Sessions(this);
     this.userSessions = new UserSessions(this);
     this.attchments = new Attachments(this);
     this.remote = currentUserRemoteSingleton.getInstance(this);
     this.currentSession;
     this.y2wIMBridge;
-}
+
+};
 CurrentUser.prototype = new User({});
 CurrentUser.prototype.init = function(){
     this.userConversations.init();
     this.contacts.init();
     this.sessions.init();
     this.userSessions.init();
-}
+    this.emojis.init();
+};
 CurrentUser.prototype.logout = function(cb){
     try {
         this.y2wIMBridge.disconnect();
@@ -233,7 +273,38 @@ CurrentUser.prototype.logout = function(cb){
     Users.getInstance().localStorage.removeCurrentUserInfo();
     Users.getInstance().localStorage.removeCurrentId();
     cb();
-}
+};
+CurrentUser.prototype.relogin=function(cb){
+    if(!this._login || !this._login.a || !this._login.p){
+        cb("没有记录登陆信息,重新登陆");
+        return;
+    }
+    var url = 'users/login';
+    var params = {
+        email: this._login.a,
+        password:this._login.p
+    };
+    var that=this;
+    baseRequest.post(url, params, null, function(err, obj){
+        if(err){
+            cb(err);
+            return;
+        }
+
+        that.appKey = obj['key'];
+        that.secret = obj['secret'];
+        that.token = obj['token'];
+        var data=that.users.localStorage.getCurrentUserInfo();
+        data.key=obj.key;
+        data.secret=obj.secret;
+        data.token=obj.token;
+        that.users.localStorage.setCurrentUserInfo(data);
+
+
+        cb(null, that.token);
+    });
+
+};
 CurrentUser.prototype.toJSON = function(){
     return {
         id: this.id,
@@ -253,18 +324,22 @@ CurrentUser.prototype.toJSON = function(){
         token: this.token,
         imToken: this.imToken
     }
-}
+};
 
-CurrentUser.prototype.y2wIMInit = function(){
+CurrentUser.prototype.y2wIMInit = function(opts){
     var that = this;
     this.remote.syncIMToken(function(err){
         if(err){
             console.log(err);
+            setTimeout(function(){
+                that.y2wIMInit(opts)
+            },5000);
             return;
         }
-        that.y2wIMBridge = new y2wIMBridge(that);
+        that.y2wIMBridge = new y2wIMBridge(that,opts);
+        console.log("y2wIMBridge is ready");
     })
-}
+};
 
 var currentUserRemoteSingleton = (function(){
     var _instance;
@@ -279,7 +354,16 @@ var currentUserRemoteSingleton = (function(){
                 client_id: _user.appKey,
                 client_secret: _user.secret
             };
+            var that=this;
             y2wAuthorizeRequest.post(url, params, _user.token, function(err, data){
+                if(err && err.status == 400){
+                    y2w.relogin(function(error,token){
+                        if(error)
+                            return cb(error);
+                        that.syncIMToken(cb);
+                    });
+                    return;
+                }
                 if(err){
                     cb(err);
                     return;
@@ -287,7 +371,7 @@ var currentUserRemoteSingleton = (function(){
                 _user.imToken = data.access_token;
                 cb(null, _user.imToken);
             })
-        }
+        };
         this.store = function(cb){
             cb = cb || nop;
             var url = 'users/' + _user.id;
@@ -310,7 +394,35 @@ var currentUserRemoteSingleton = (function(){
                 Users.getInstance().localStorage.setUsers(Users.getInstance().getUsers());
                 cb(null);
             })
-        }
+        };
+        this.setPassword=function(psw,npsw,cb){
+            cb = cb || nop;
+            var url= 'users/setPassword';
+            var params={
+                oldPassword:MD5(psw),
+                password:MD5(npsw)
+            };
+            baseRequest.post(url, params, _user.token, function(err){
+                if(err){
+                    if(err.responseText){
+                        try {
+                            var error = JSON.parse(err.responseText);
+                            cb(error.message)
+                        }
+                        catch(e){
+                            cb(err);
+                        }
+                    }
+                    else {
+                        cb(err);
+                    }
+                    return;
+                }
+
+                cb(null);
+            })
+
+        };
     }
     return{
         getInstance: function(user){

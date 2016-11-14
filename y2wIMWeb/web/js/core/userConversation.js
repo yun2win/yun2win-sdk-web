@@ -41,8 +41,41 @@ var UserConversations = function(user){
             if(!_list[k].isDelete && (!type || (type && _list[k].type == type)))
                 foo.push(_list[k]);
         }
-        return quickSort(foo, 'updatedAt', true);
-    }
+
+        for(var i=0;i<foo.length;i++){
+            for(var j=i+1;j<foo.length;j++){
+                var a=foo[i],b=foo[j];
+                var aUpdatedAt= a.updatedAt+ (a.top?a.updatedAt:0);
+                var bUpdatedAt= b.updatedAt+ (b.top?b.updatedAt:0);
+                if( (aUpdatedAt < bUpdatedAt)){
+                    foo[i]=b;
+                    foo[j]=a;
+                }
+            }
+        }
+
+        //foo.splice(0,1,new UserConversation(this,{
+        //    //this.id = obj['id'];
+        //    //this.name = obj['name'];
+        //    //this.avatarUrl = obj['avatarUrl'] || ' ';
+        //    //if(this.avatarUrl.indexOf('/images/default.jpg') >= 0)
+        //    //    this.avatarUrl = ' ';
+        //    //this.targetId = obj['targetId'];
+        //    //this.unread = obj['unread'];
+        //    //this.type = obj['type'];
+        //    //this.isDelete = obj['isDelete'];
+        //    //this.createdAt = new Date(obj['createdAt']).getTime();
+        //    //this.updatedAt = new Date(obj['updatedAt']).getTime();
+        //    //this.visiable = obj['visiable'];
+        //    //this.top = obj['top'];
+        //    id:'0',
+        //    name:'',
+        //}));
+
+
+        return foo;
+        //return quickSort(foo, 'updatedAt', true);
+    };
     this.addUserConversations = function(list){
         for(var i = 0; i < list.length; i++){
             var userConversation = this._add(list[i]);
@@ -76,10 +109,10 @@ userConversationsLocalStorage.prototype.getList = function(){
 }
 userConversationsLocalStorage.prototype.setList = function(list){
     localStorage.setItem(this.userConversations.user.id + '_userConversations', JSON.stringify(list));
-}
+};
 var userConversationsRemote = function(userConversations) {
     this.userConversations = userConversations;
-}
+};
 userConversationsRemote.prototype.sync = function(cb) {
     cb = cb || nop;
     var that = this;
@@ -91,8 +124,8 @@ userConversationsRemote.prototype.sync = function(cb) {
         }
         that.userConversations.addUserConversations(data.entries);
         cb(null, data.entries.length);
-    })
-}
+    });
+};
 /**
  * 修改用户会话
  * @param userConversation
@@ -117,6 +150,29 @@ userConversationsRemote.prototype.store = function(userConversation, cb){
     })
 }
 /**
+ * 置顶和取消置顶
+ * @param userConversation
+ * @param cb
+ */
+userConversationsRemote.prototype.updateTop = function(userConversation, cb){
+    var that = this;
+    cb = cb || nop;
+    var url = 'users/' + that.userConversations.user.id + '/userConversations/' + userConversation.id;
+    var params = {
+        targetId: userConversation.targetId,
+        name: userConversation.name,
+        type: userConversation.type,
+        top: userConversation.top
+    };
+    baseRequest.put(url, params, that.userConversations.user.token, function(err, data){
+        if(err){
+            cb(err);
+            return;
+        }
+        cb(null, data);
+    })
+}
+/**
  * 删除用户会话
  * @param userConversationId:用户会话id
  * @param cb
@@ -132,7 +188,7 @@ userConversationsRemote.prototype.remove = function(userConversationId, cb){
         }
         cb(null, data);
     })
-}
+};
 
 var UserConversation = function(userConversations, obj){
     this.userConversations = userConversations;
@@ -269,10 +325,11 @@ UserConversation.prototype.getAvatarUrl = function(){
             return contact.getAvatarUrl();
         return Users.getInstance().get(this.targetId).getAvatarUrl();
     }
-    if(this.avatarUrl && $.trim(this.avatarUrl) != '')
-        return config.baseUrl + this.avatarUrl + '?access_token=' + this.userConversations.user.token;
+
+    if(this.avatarUrl && $.trim(this.avatarUrl).length>5)
+        return Util.parseAttachmentUrl(this.avatarUrl,this.userConversations.user.token,"");
     return null;
-}
+};
 /**
  * 获取目标会话
  * @param cb

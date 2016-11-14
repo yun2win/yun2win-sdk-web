@@ -1,30 +1,72 @@
 'use strict';
 
-var y2wIMBridge = function(user){
+var y2wIMBridge = function(user, opts){
     this.user = user;
     this._client;
     var that = this;
     var clearIndex = 0;
+    this.reSendTimes = 0;
+
+    this.connectionStatus = {
+        connecting: 0,
+        connected: 1,
+        reconnecting: 2,
+        networkDisconnected: 3,
+        disconnected: 100
+    };
+
+    this.connectionReturnCode = {
+        identifierRejected: 2,
+        unacceptableProtocolVersion: 3,
+        uidIsInvalid: 4,
+        tokenIsInvalid: 5,
+        tokenHasExpired: 6,
+        authenticationServerError: 7,
+        kicked: 10,
+        acceptConnect: 11,
+        requestGateError: 101,
+        serverUnavailable: 99,
+        serverInternalError: 100
+    };
+
+    this.sendReturnCode = {
+        success: 20,
+        timeout: 21,
+        cmdIsInvalid: 22,
+        sessionIsInvalid: 23,
+        sessionIdIsInvalid: 24,
+        sessionMTSIsInvalid: 25,
+        sessionOnServerIsNotExist: 26,
+        sessionMTSOnClientHasExpired: 27,
+        sessionMTSOnServerHasExpired: 28,
+        sessionMembersIsInvalid: 29,
+        invalidFormatOfJSONContent: 30,
+        sessionMembersIsNull: 31
+    };
 
     this.sendList = [];
     this.sendTypes = {
         text: 0,
-        file: 1
-    }
+        file: 1,
+        singleavcall: 2,//单人 音视频 
+        groupacall: 3,//多人音视频
+        system:10,
+        copy:11
+    };
 
     this.syncTypes = {
         userConversation: 0,
         message: 1,
         contact: 2,
         userSession: 3
-    }
+    };
     this.syncList = [];
     this.syncDic = {};
     this.syncStatus = {
         none: 0,
         syncing: 1,
         repeat: 2
-    }
+    };
     this.getSyncStatus = function(syncObj){
         var key;
         switch(syncObj.type){
@@ -39,7 +81,7 @@ var y2wIMBridge = function(user){
         if(this.syncDic[key] == undefined)
             return this.syncStatus.none;
         return this.syncDic[key];
-    }
+    };
     this.setSyncStatus = function(syncObj, status){
         var key;
         switch(syncObj.type){
@@ -70,7 +112,7 @@ var y2wIMBridge = function(user){
                     break;
             }
         }
-    }
+    };
     /**
      * 处理同步消息
      * @param syncObj
@@ -104,7 +146,7 @@ var y2wIMBridge = function(user){
             this.setSyncStatus(syncObj, this.syncStatus.none);
             cb();
         }
-    }
+    };
     this.handleSync_UserConversation = function(syncObj, cb){
         var that = this;
         this.user.userConversations.remote.sync(function(err){
@@ -122,7 +164,7 @@ var y2wIMBridge = function(user){
                 cb();
             }
         })
-    }
+    };
     this.handleSync_Contact = function(syncObj, cb){
         var that = this;
         this.user.contacts.remote.sync(function(err){
@@ -140,7 +182,7 @@ var y2wIMBridge = function(user){
                 cb();
             }
         })
-    }
+    };
     this.handleMessage = function(){
         var that = this;
         if(this.syncList.length > 0){
@@ -150,49 +192,47 @@ var y2wIMBridge = function(user){
                     this.handleSync_Contact(syncObj, function(){
                         if(that.syncList.length > 0)
                             that.handleMessage();
-                    })
+                    });
                     break;
                 case this.syncTypes.userConversation:
                     this.handleSync_UserConversation(syncObj, function(){
                         if(that.syncList.length > 0)
                             that.handleMessage();
-                    })
+                    });
                     break;
                 case this.syncTypes.message:
                     this.handleSync_Message(syncObj, function(){
                         if(that.syncList.length > 0)
                             that.handleMessage();
-                    })
+                    });
                     break;
                 default :
                     break;
             }
         }
-    }
+    };
 
     var onDisconnected = function (returnCode) {
         switch (returnCode) {
-            case y2wIM.connectionReturnCode.uidIsInvalid:
-                console.error('disconnected: uid is invalid');
-                break;
-            case y2wIM.connectionReturnCode.tokenIsInvalid:
-                console.error('disconnected: token is invalid');
-                break;
-            case y2wIM.connectionReturnCode.tokenHasExpired:
-                console.info('disconnected: token has expired');
+            case that.connectionReturnCode.tokenIsInvalid:
+            case that.connectionReturnCode.tokenHasExpired:
+                if(returnCode == that.connectionReturnCode.tokenIsInvalid)
+                    console.error('disconnected: token is invalid');
+                else
+                    console.info('disconnected: token has expired');
                 that.user.remote.syncIMToken(function(err){
                     if(err){
                         console.error(err);
+                        setTimeout(function(){
+                            that.reconnect(that.user.imToken);
+                        }, 10 * 1000);
                         return;
                     }
                     console.info('sync token success');
-                    that.connect();
-                })
+                    that.reconnect(that.user.imToken);
+                });
                 break;
-            case y2wIM.connectionReturnCode.appKeyIsInvalid:
-                console.error('disconnected: appkey is invalid');
-                break;
-            case y2wIM.connectionReturnCode.kicked:
+            case that.connectionReturnCode.kicked:
                 console.warn('disconnected: another divice has connected');
                 alert('您的帐号在其它地方登录，请重新登录');
                 y2w.logout();
@@ -205,90 +245,119 @@ var y2wIMBridge = function(user){
      * @param msg:连接信息
      */
     this.onConnectionStatusChanged = function (status, msg) {
+
         switch (status) {
-            case y2wIM.connectionStatus.connecting:
-                console.log('connecting');
+            case that.connectionStatus.connecting:
+                if(msg)
+                    console.log('connecting region:' + msg.region);
+                else
+                    console.log('connecting');
+                if(opts.onStatusChanged)
+                    opts.onStatusChanged('disConnected');
                 break;
-            case y2wIM.connectionStatus.connected:
+            case that.connectionStatus.connected:
                 console.log('connected');
+                if(opts.onStatusChanged)
+                    opts.onStatusChanged('connected');
                 break;
-            case y2wIM.connectionStatus.reconnecting:
+            case that.connectionStatus.reconnecting:
                 console.log('reconnecting(' + msg + ')');
+                if(opts.onStatusChanged)
+                    opts.onStatusChanged('disConnected');
                 break;
-            case y2wIM.connectionStatus.networkDisconnected:
+            case that.connectionStatus.networkDisconnected:
                 console.warn('unable to connect to the network');
+                if(opts.onStatusChanged)
+                    opts.onStatusChanged('disConnected');
                 break;
-            case y2wIM.connectionStatus.disconnected:
+            case that.connectionStatus.disconnected:
                 onDisconnected(msg);
+                if(opts.onStatusChanged)
+                    opts.onStatusChanged('disConnected');
                 break;
             default:
+                if(opts.onStatusChanged)
+                    opts.onStatusChanged('disConnected');
                 break;
         }
     };
     this.onUpdateSession = {
         onSuccess: function(session, message){
-            console.log('update session success');
-            //重新发送消息
-            if (message) {
-                that._client.sendMessage(session, message, that.onSendMessage);
-            }
+            console.log('update session and send message success');
+            that.reSendTimes = 0;
         },
-        onFailure: function(returnCode, session){
+        onFailure: function(returnCode, session, message){
             switch (returnCode) {
-                case y2wIM.sendReturnCode.sessionIsInvalid:
+                case that.sendReturnCode.sessionIsInvalid:
                     console.error('update session error: session is invalid');
                     break;
-                case y2wIM.sendReturnCode.sessionIdIsInvalid:
+                case that.sendReturnCode.sessionIdIsInvalid:
                     console.error('update session error: session.id is invalid');
                     break;
-                case y2wIM.sendReturnCode.sessionMTSIsInvalid:
+                case that.sendReturnCode.sessionMTSIsInvalid:
                     console.error('update session error: session.mts is invalid');
                     break;
-                case y2wIM.sendReturnCode.cmdIsInvalid:
+                case that.sendReturnCode.cmdIsInvalid:
                     console.error('update session error: cmd is invalid');
                     break;
-                case y2wIM.sendReturnCode.invalidFormatOfJSONContent:
+                case that.sendReturnCode.invalidFormatOfJSONContent:
                     console.error('send error: send content\'s format is not a valid json');
                     break;
-                case y2wIM.sendReturnCode.sessionMTSOnClientHasExpired:
+                case that.sendReturnCode.sessionMTSOnClientHasExpired:
                     console.error('update session error: session mts on client has expired');
+                    break;
+                case that.sendReturnCode.timeout:
+                    console.error('update session timeout, update session again');
+                    if(that.reSendTimes > 10)
+                        that.connect();
+                    else {
+                        //重新发送消息
+                        that.reSendTimes++;
+                        that._client.updateSession(session, message, that.onUpdateSession);
+                    }
                     break;
                 default:
                     console.log(returnCode);
                     break;
             }
         }
-    }
+    };
     this.onSendMessage = {
         onSuccess: function () {
             console.log('send success');
+            that.reSendTimes = 0;
         },
         onFailure: function (returnCode, session, message, data) {
             switch (returnCode) {
-                case y2wIM.sendReturnCode.sessionIsInvalid:
+                case that.sendReturnCode.sessionIsInvalid:
                     console.error('send error: session is invalid');
                     break;
-                case y2wIM.sendReturnCode.sessionIdIsInvalid:
+                case that.sendReturnCode.sessionIdIsInvalid:
                     console.error('send error: session.id is invalid');
                     break;
-                case y2wIM.sendReturnCode.sessionMTSIsInvalid:
+                case that.sendReturnCode.sessionMTSIsInvalid:
                     console.error('send error: session.mts is invalid');
                     break;
-                case y2wIM.sendReturnCode.cmdIsInvalid:
+                case that.sendReturnCode.cmdIsInvalid:
                     console.error('send error: cmd is invalid');
                     break;
-                case y2wIM.sendReturnCode.invalidFormatOfJSONContent:
+                case that.sendReturnCode.invalidFormatOfJSONContent:
                     console.error('send error: send content\'s format is not a valid json');
                     break;
-                case y2wIM.sendReturnCode.sessionOnServerIsNotExist:
+                case that.sendReturnCode.sessionOnServerIsNotExist:
                     console.error('send error: session on server is not exist, update server session and resend message');
                     //更新服务器Session后重新发送消息
                     var foo = session.id.split('_');
-                    var busiSession = that.user.sessions.getById(foo[1]);
-                    var imSession = that.transToIMSession(busiSession, true);
+                    var imSession;
+                    if(foo[0] == that.getY2wIMAppSessionPrefix())
+                        imSession = that.transToIMSessionForY2wIMApp(foo[1], true);
+                    else{
+                        var busiSession = that.user.sessions.getById(foo[1]);
+                        imSession = that.transToIMSession(busiSession, true);
+                    }
                     that._client.updateSession(imSession, message, that.onUpdateSession);
                     break;
-                case y2wIM.sendReturnCode.sessionMTSOnClientHasExpired:
+                case that.sendReturnCode.sessionMTSOnClientHasExpired:
                     console.error('send error: session mts on client has expired, get new client session and resend message');
                     //客户端获取Session后重新发送消息
                     var foo = session.id.split('_');
@@ -298,30 +367,70 @@ var y2wIMBridge = function(user){
                             console.error(err);
                             return;
                         }
-                        var imSession = that.transToIMSession(busiSession);
-                        that._client.sendMessage(imSession, message, that.onSendMessage);
-                    })
+                        busiSession.tryTime=busiSession.tryTime||0;
+                        if(busiSession.tryTime>3){
+                            busiSession.tryTime=0;
+                            var imSession = that.transToIMSession(busiSession, true, data, true);
+                            that._client.updateSession(imSession, message, that.onUpdateSession);
+                        }
+                        else{
+                            busiSession.tryTime++;
+                            var imSession = that.transToIMSession(busiSession);
+                            that._client.sendMessage(imSession, message, that.onSendMessage);
+                        }
+                        console.log(busiSession.id+"==="+(busiSession.tryTime++));
+                    });
                     break;
-                case y2wIM.sendReturnCode.sessionMTSOnServerHasExpired:
+                case that.sendReturnCode.sessionMTSOnServerHasExpired:
                     console.error('send error: session mts on server has expired, update server session and resend message');
                     //更新服务器Session后重新发送消息
                     var foo = session.id.split('_');
                     var busiSession = that.user.sessions.getById(foo[1]);
-                    var imSession = that.transToIMSession(busiSession, true, data);
-                    that._client.updateSession(imSession, message, that.onUpdateSession);
+                    if(busiSession) {
+                        var imSession = that.transToIMSession(busiSession, true, data);
+                        that._client.updateSession(imSession, message, that.onUpdateSession);
+                    }
+                    else
+                        console.error('session is no exist');
+                    break;
+                case that.sendReturnCode.timeout:
+                    console.error('send message timeout, send message again');
+                    if(that.reSendTimes > 10)
+                        that.connect();
+                    else {
+                        //重新发送消息
+                        that.reSendTimes++;
+                        that._client.sendMessage(session, message, that.onSendMessage);
+                    }
                     break;
                 default:
                     console.log(returnCode);
                     break;
             }
         }
-    }
+    };
     this.onMessage = function(obj){
         var that = currentUser.y2wIMBridge;
         var message = obj.message;
         if(obj.cmd == 'sendMessage'){
+            var showNoti = false;
             for(var i = 0; i < message.syncs.length; i++){
                 var syncObj = message.syncs[i];
+                if (syncObj.type == 1) {
+                    showNoti = true;
+                }
+                if (syncObj.type == "groupavcall" || syncObj.type == "singleavcall") {
+                    var receiversIds = syncObj.content.receiversIds;
+                    if (receiversIds) {
+                        for (var j = 0; j < receiversIds.length; j++) {
+                            if (receiversIds[j] == currentUser.id) {
+                                y2w.receive_AV_Mesage(syncObj);
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                }
                 var status = that.getSyncStatus(syncObj);
                 switch (status){
                     case that.syncStatus.none:
@@ -333,12 +442,26 @@ var y2wIMBridge = function(user){
                         break;
                 }
             }
+
+            if (Notification.permission == 'granted' && showNoti) {
+                var n = new Notification('yun2win', {body: '您有一条新消息'});
+                n.onshow = function() {
+                    setTimeout(function() {
+                        n.close();
+                    }, 5000);
+                };
+            }
         }
     };
 
+    if (Notification.permission != 'granted') {
+        Notification.requestPermission();
+    }
+
     this.connect();
-}
+};
 y2wIMBridge.prototype.connect = function(){
+    var that = this;
     var opts = {
         appKey: this.user.appKey,
         token: this.user.imToken,
@@ -346,51 +469,90 @@ y2wIMBridge.prototype.connect = function(){
         onConnectionStatusChanged: this.onConnectionStatusChanged,
         onMessage: this.onMessage
     };
-    this._client = y2wIM.connect(opts);
-}
+    y2wIM.connect(opts, function (client) {
+        that._client = client;
+    });
+};
+y2wIMBridge.prototype.reconnect = function(token){
+    this._client.reconnect(token);
+};
 y2wIMBridge.prototype.disconnect = function(cb){
     cb = cb || nop;
-    this._client.disconnect(cb);
-}
-y2wIMBridge.prototype.transToIMSession = function(busiSession, withMembers, time){
+    if(this._client && this._client.connected)
+        this._client.disconnect(cb);
+    else
+        cb();
+};
+y2wIMBridge.prototype.transToIMSession = function(busiSession, withMembers, time, force){
     var session = {};
     session.id = busiSession.type + '_' + busiSession.id;
     session.mts = busiSession.members.createdAt;
+    session.force = !!force;
     if(withMembers) {
         session.members = [];
-        var busiMembers = busiSession.members.getMembers();
+        var busiMembers = busiSession.members.getAllMembers();
         for (var i = 0; i < busiMembers.length; i++) {
-            if(!time) {
+            if(force){
+                session.members.push({
+                    uid: busiMembers[i].userId,
+                    isDel: busiMembers[i].isDelete
+                });
+            }
+            else if(!time) {
                 if(!busiMembers[i].isDelete)
                     session.members.push({
                         uid: busiMembers[i].userId
                     })
             }
             else{
-                if(busiMembers[i].updatedAt > time) {
+                //if(busiMembers[i].updatedAt > time) {
+                if(busiMembers[i].createdAt > time) {
                     session.members.push({
                         uid: busiMembers[i].userId,
                         isDel: busiMembers[i].isDelete
-                    })
+                    });
                 }
             }
         }
     }
     return session;
+};
+y2wIMBridge.prototype.getY2wIMAppSessionPrefix = function(){
+    return 'y2wIMApp';
+}
+y2wIMBridge.prototype.getY2wIMAppMTS = function(){
+    return 1264953600000;
+}
+y2wIMBridge.prototype.transToIMSessionForY2wIMApp = function(to, withMembers){
+    var session = {
+        id: this.getY2wIMAppSessionPrefix() + '_' + to,
+        mts: this.getY2wIMAppMTS()
+    };
+    if(withMembers)
+        session.members = [ { uid: to, isDel: false } ];
+    return session;
 }
 y2wIMBridge.prototype.sendMessage = function(imSession, sync){
     var message = {
         syncs: sync
+    };
+    for(var i = 0; i < message.syncs.length; i++){
+        if(message.syncs[i].type == this.syncTypes.message){
+            message.pns = { msg: '您有一条新消息' };
+            break;
+        }
     }
     this._client.sendMessage(imSession, message, this.onSendMessage);
-}
+};
 
 y2wIMBridge.prototype.addToSendList = function(obj){
+    if(!obj.id)
+        obj.id=guid();
     this.sendList.push(obj);
     if(this.sendList.length == 1){
         this.handleSendMessage();
     }
-}
+};
 y2wIMBridge.prototype.handleSendMessage = function(){
     var that = this;
     if(this.sendList.length > 0){
@@ -400,35 +562,66 @@ y2wIMBridge.prototype.handleSendMessage = function(){
                 this.handleSendTextMessage(sendObj, function(){
                     if(that.sendList.length > 0)
                         that.handleSendMessage();
-                })
+                });
+                break;
+            case this.sendTypes.system:
+                this.handleSendSystemMessage(sendObj, function(){
+                    if(that.sendList.length > 0)
+                        that.handleSendMessage();
+                });
                 break;
             case this.sendTypes.file:
                 this.handleSendFileMessage(sendObj, function(){
                     if(that.sendList.length > 0)
                         that.handleSendMessage();
-                })
+                });
                 break;
-            default :
+            case this.sendTypes.singleavcall:
+                this.handleSendCallMessage(sendObj, function () {
+                    if (that.sendList.length > 0)
+                        that.handleSendMessage();
+                });
+                break;
+            case this.sendTypes.groupacall:
+                this.handleSendCallMessage(sendObj, function () {
+                    if (that.sendList.length > 0)
+                        that.handleSendMessage();
+                });
+                break;
+            case this.sendTypes.copy:
+                this.handleSendCopyMessage(sendObj,function(){
+                    if(that.sendList.length > 0)
+                        that.handleSendMessage();
+                });
+                break;
+            default:
                 break;
         }
     }
-}
-y2wIMBridge.prototype.handleSendTextMessage = function(sendObj, cb){
+};
+y2wIMBridge.prototype.handleSendCopyMessage = function(sendObj, cb){
+
+    if(!sendObj.obj)
+        return cb();
+
     var targetId = sendObj.targetId,
         scene = sendObj.scene,
-        text = sendObj.text,
+        content = sendObj.obj.content,
+        type = sendObj.obj.type,
         options = sendObj.options || nop,
+        msgId=sendObj.id ,
         that = this;
     this.user.sessions.get(targetId, scene, function (err, session) {
         //创建消息对象
-        var message = session.messages.createMessage({
-            sender: that.user.id,
+        var message = session.messages.getOrCreateMessage({
+            id:msgId,
+            sender: sendObj.sender || that.user.id,
             to: targetId,
-            type: 'text',
-            content: { text: text },
+            type: type,
+            content: content,
             status: 'storing'
-        });
-        session.messages.add(message);
+        },true);
+        //session.messages.add(message);
         var id = message.id;
         //显示消息
         if(options.showMsg)
@@ -439,7 +632,8 @@ y2wIMBridge.prototype.handleSendTextMessage = function(sendObj, cb){
                 console.error(err);
                 if(options.storeMsgFailed)
                     options.storeMsgFailed(id);
-                that.sendList.splice(0, 1);
+                var obj=that.sendList.splice(0, 1);
+                that.onMsgStoreError(obj);
                 cb();
                 return;
             }
@@ -449,7 +643,7 @@ y2wIMBridge.prototype.handleSendTextMessage = function(sendObj, cb){
             var syncs = [
                 { type: that.syncTypes.userConversation },
                 { type: that.syncTypes.message, sessionId: imSession.id }
-            ]
+            ];
             that.sendMessage(imSession, syncs);
 
             if(options.storeMsgDone)
@@ -459,22 +653,152 @@ y2wIMBridge.prototype.handleSendTextMessage = function(sendObj, cb){
             cb();
         })
     });
-}
+};
+y2wIMBridge.prototype.handleSendTextMessage = function(sendObj, cb){
+    var targetId = sendObj.targetId,
+        scene = sendObj.scene,
+        text = sendObj.text,
+        options = sendObj.options || nop,
+        msgId=sendObj.id ,
+        that = this;
+    this.user.sessions.get(targetId, scene, function (err, session) {
+        //创建消息对象
+        var message = session.messages.getOrCreateMessage({
+            id:msgId,
+            sender: sendObj.sender || that.user.id,
+            to: targetId,
+            type: 'text',
+            content: { text: text },
+            status: 'storing'
+        },true);
+        //session.messages.add(message);
+        var id = message.id;
+        //显示消息
+        if(options.showMsg)
+            options.showMsg(message);
+        //保存消息对象
+        session.messages.remote.store(message, function(err, msg){
+            if(err){
+                console.error(err);
+                if(options.storeMsgFailed)
+                    options.storeMsgFailed(id);
+                var obj=that.sendList.splice(0, 1);
+                that.onMsgStoreError(obj);
+                cb();
+                return;
+            }
+
+            //发送通知
+            var imSession = that.transToIMSession(session);
+            var syncs = [
+                { type: that.syncTypes.userConversation },
+                { type: that.syncTypes.message, sessionId: imSession.id }
+            ];
+            that.sendMessage(imSession, syncs);
+
+            if(options.storeMsgDone)
+                options.storeMsgDone(id, session.type, targetId, msg);
+
+            that.sendList.splice(0, 1);
+            cb();
+        })
+    });
+};
+y2wIMBridge.prototype.handleSendSystemMessage = function(sendObj, cb){
+    var targetId = sendObj.targetId,
+        scene = sendObj.scene,
+        text = sendObj.text,
+        msgId = sendObj.id ,
+        options = sendObj.options || nop,
+        that = this;
+    this.user.sessions.get(targetId, scene, function (err, session) {
+        //创建消息对象
+        var message = session.messages.getOrCreateMessage({
+            id:msgId,
+            sender: sendObj.sender || that.user.id,
+            to: targetId,
+            type: 'system',
+            content: { text: text },
+            status: 'storing'
+        },true);
+        //session.messages.add(message);
+        var id = message.id;
+        //显示消息
+        if(options.showMsg)
+            options.showMsg(message);
+        //保存消息对象
+        session.messages.remote.store(message, function(err, msg){
+            if(err){
+                console.error(err);
+                if(options.storeMsgFailed)
+                    options.storeMsgFailed(id);
+                var obj=that.sendList.splice(0, 1);
+                that.onMsgStoreError(obj);
+                cb();
+                return;
+            }
+
+            //发送通知
+            var imSession = that.transToIMSession(session);
+            var syncs = [
+                { type: that.syncTypes.userConversation },
+                { type: that.syncTypes.message, sessionId: imSession.id }
+            ];
+            that.sendMessage(imSession, syncs);
+
+            if(options.storeMsgDone)
+                options.storeMsgDone(id, session.type, targetId, msg);
+
+            that.sendList.splice(0, 1);
+            cb();
+        })
+    });
+};
+y2wIMBridge.prototype.handleSendCallMessage = function (sendObj, cb) {
+    var targetId = sendObj.targetId,
+       scene = sendObj.scene,
+       text = sendObj.content,
+       that = this;
+    var msgtype;
+    if (scene === 'p2p') {
+        msgtype = "singleavcall";
+    } else {
+        msgtype = "groupavcall";
+    }
+    this.user.sessions.get(targetId, scene, function (err, session) {
+        //发送通知
+        var imSession = that.transToIMSession(session);
+        var syncs = [
+                { type: that.syncTypes.userConversation },
+                { type: that.syncTypes.message, sessionId: imSession.id },
+                 { type: msgtype, content: text }
+        ];
+        that.sendMessage(imSession, syncs);
+        that.sendList.splice(0, 1);
+        cb();
+    });
+};
+
 y2wIMBridge.prototype.handleSendFileMessage = function(sendObj, cb){
     var targetId = sendObj.targetId,
         scene = sendObj.scene,
         file = sendObj.file,
+        msgId = sendObj.id ,
         options = sendObj.options || nop;
     if(file.type.match('image')){
         var fileReader = new FileReader();
         fileReader.readAsDataURL(file);
-        fileReader.onload = this.onImageLoadSuccess.bind(this, targetId, scene, options, cb);
+        fileReader.onload = this.onImageLoadSuccess.bind(this, msgId, targetId, scene, options, cb);
         fileReader.onerror = this.onImageLoadError.bind(this, cb)
     }
     else{
-        throw 'format is invalid';
+        //throw 'format is invalid';
+        var fileReader = new FileReader();
+        fileReader.readAsDataURL(file);
+        fileReader.onload = this.onFileLoadSuccess.bind(this, msgId, targetId, scene, options,file.name,file.size, cb);
+        fileReader.onerror = this.onFileLoadError.bind(this, cb)
     }
-}
+};
 
 /**
  * 发送文字消息
@@ -495,9 +819,29 @@ y2wIMBridge.prototype.sendTextMessage = function(targetId, scene, text, options)
         options: options,
         type: this.sendTypes.text
     });
-}
+};
+y2wIMBridge.prototype.sendCopyMessage = function(targetId,scene,content,type,options){
+    this.addToSendList({
+        targetId: targetId,
+        scene: scene,
+        obj: {content:content,type:type},
+        options:options,
+        type: this.sendTypes.copy
+    });
+};
 
-y2wIMBridge.prototype.onImageLoadSuccess = function(targetId, scene, options, cb, e){
+y2wIMBridge.prototype.sendSystemMessage = function(targetId, scene, text, options){
+    this.addToSendList({
+        sender:"system",
+        targetId: targetId,
+        scene: scene,
+        text: text,
+        options: options,
+        type: this.sendTypes.system
+    });
+};
+
+y2wIMBridge.prototype.onImageLoadSuccess = function(msgId, targetId, scene, options, cb, e){
     var that = this;
     options = options || nop;
     //获取图片宽高
@@ -509,15 +853,17 @@ y2wIMBridge.prototype.onImageLoadSuccess = function(targetId, scene, options, cb
         $tempImage.remove();
 
         that.user.sessions.get(targetId, scene, function (err, session) {
-            //创建消息对象
-            var message = session.messages.createMessage({
+
+            var message  = session.messages.getOrCreateMessage({
+                id: msgId,
                 sender: that.user.id,
                 to: targetId,
                 type: 'image',
-                content: { base64: e.target.result, width: width, height: height },
+                content: {base64: e.target.result, width: width, height: height},
                 status: 'storing'
-            });
-            session.messages.add(message);
+            },true);
+            //session.messages.add(message);
+
             var id = message.id;
             //显示消息
             if(options.showMsg)
@@ -529,7 +875,8 @@ y2wIMBridge.prototype.onImageLoadSuccess = function(targetId, scene, options, cb
                     console.error(err);
                     if (options.storeMsgFailed)
                         options.storeMsgFailed(id);
-                    currentUser.y2wIMBridge.sendList.splice(0, 1);
+                    var obj=that.sendList.splice(0, 1);
+                    that.onMsgStoreError(obj);
                     cb();
                     return;
                 }
@@ -553,7 +900,7 @@ y2wIMBridge.prototype.onImageLoadSuccess = function(targetId, scene, options, cb
                     var syncs = [
                         { type: that.syncTypes.userConversation },
                         { type: that.syncTypes.message, sessionId: imSession.id }
-                    ]
+                    ];
                     that.sendMessage(imSession, syncs);
 
                     if (options.storeMsgDone)
@@ -565,11 +912,110 @@ y2wIMBridge.prototype.onImageLoadSuccess = function(targetId, scene, options, cb
             })
         });
     })
-}
+};
 y2wIMBridge.prototype.onImageLoadError = function(){
-    this.sendList.splice(0, 1);
+    var obj=this.sendList.splice(0, 1);
+    var that=this;
+    setTimeout(function(){
+        that.addToSendList(obj);
+    });
     cb();
-}
+};
+//上传文件完成
+y2wIMBridge.prototype.onFileLoadSuccess = function(msgId,targetId, scene, options,name,fileSize, cb, e){
+    var that = this;
+    options = options || nop;
+
+    that.user.sessions.get(targetId, scene, function (err, session) {
+        //创建消息对象
+        var message = session.messages.getOrCreateMessage({
+            id:msgId,
+            sender: that.user.id,
+            to: targetId,
+            type: 'file',
+            content: {base64: e.target.result, name: name, size: fileSize},
+            status: 'storing'
+        },true);
+        //session.messages.add(message);
+        var id = message.id;
+        //显示消息
+        if(options.showMsg)
+            options.showMsg(message);
+        //上传图片
+        var fileName =name;
+        that.user.attchments.uploadBase64("application/octet-stream",fileName, e.target.result, function(err, data) {
+            if (err) {
+                console.error(err);
+                if (options.storeMsgFailed)
+                    options.storeMsgFailed(id);
+                var obj=that.sendList.splice(0, 1);
+                that.onMsgStoreError(obj);
+                cb();
+                return;
+            }
+            var src = 'attachments/' + data.id + '/content';
+            //保存消息对象
+            message.content.src = src;
+            //message.content.thumbnail = src;
+            delete message.content.base64;
+            session.messages.remote.store(message, function (err, msg) {
+                if (err) {
+                    console.error(err);
+                    if (options.storeMsgFailed)
+                        options.storeMsgFailed(id);
+                    currentUser.y2wIMBridge.sendList.splice(0, 1);
+                    cb();
+                    return;
+                }
+
+                //发送通知
+                var imSession = that.transToIMSession(session);
+                var syncs = [
+                    { type: that.syncTypes.userConversation },
+                    { type: that.syncTypes.message, sessionId: imSession.id }
+                ]
+                that.sendMessage(imSession, syncs);
+
+                if (options.storeMsgDone)
+                    options.storeMsgDone(id, session.type, targetId, msg);
+
+                currentUser.y2wIMBridge.sendList.splice(0, 1);
+
+                //message.content=msg.content;
+                if(options.updateMsg)
+                    options.updateMsg(message);
+
+                cb();
+            })
+        })
+    });
+};
+
+y2wIMBridge.prototype.onFileLoadError = function(){
+    var obj=this.sendList.splice(0, 1);
+    var that=this;
+    setTimeout(function(){
+        that.addToSendList(obj);
+    });
+    cb();
+};
+y2wIMBridge.prototype.onMsgStoreError=function(obj){
+
+    if(!obj)
+        return;
+
+    if(obj.length)
+        obj=obj[0];
+
+    if(obj.time>60)
+        return;
+
+    var that=this;
+    obj.time=(obj.time||0)+1;
+    setTimeout(function(){
+        that.addToSendList(obj);
+    },5000);
+};
 /**
  * 发送文件消息
  * @param targetId:目标Id
@@ -589,5 +1035,37 @@ y2wIMBridge.prototype.sendFileMessage = function(targetId, scene, file, options)
         options: options,
         type: this.sendTypes.file
     });
-}
+};
+y2wIMBridge.prototype.sendcallVideoMessage = function (targetId, scene, content) {
+    var sendType;
+    if (scene === 'p2p') {
+        sendType = this.sendTypes.singleavcall;
+    } else {
+        sendType = this.sendTypes.groupacall;
+    }
 
+    this.addToSendList({
+        targetId: targetId,
+        scene: scene,
+        content: content,
+        type: sendType
+    });
+};
+
+y2wIMBridge.prototype.sendToOtherDevice=function(syncs){
+    var that=this;
+    this.user.sessions.get(this.user.id, 'single', function(err, session) {
+        if (err) {
+            console.error(err);
+            return;
+        }
+        var imSession = that.transToIMSession(session);
+        //发送通知
+        if(!syncs)
+            syncs = [
+                {type: that.syncTypes.userConversation}
+            ];
+
+        that.sendMessage(imSession, syncs);
+    });
+};

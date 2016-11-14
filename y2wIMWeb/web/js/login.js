@@ -12,6 +12,10 @@ var Login = {
 		this.$errorMsg = $('#errorMsg');
 		this.$loginBtn = $('#loginBtn');
 		this.$footer = $('#footer');
+
+		var email=localStorage.getItem("__account__");
+		if(email)
+			this.$email.val(email);
 	},
 
 	initAnimation: function() {	// 添加动画
@@ -20,6 +24,11 @@ var Login = {
 		$wrapper.addClass('fadeInDown animated').one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function(){
 			$(this).removeClass().addClass(wrapperClass);
 		});
+
+		var email=localStorage.getItem("_login_email_");
+		if(email){
+			this.$email.val(email);
+		}
 	},
 
 	/**
@@ -57,8 +66,8 @@ var Login = {
 			errorMsg = '';
 		if (email.length === 0) {
 			errorMsg = '邮箱不能为空';
-		} else if (!pwd || pwd.length < 6) {
-			errorMsg = '密码长度至少6位';
+		//} else if (!pwd || pwd.length < 3) {
+		//	errorMsg = '密码长度至少3位';
 		} else {
 			that.$loginBtn.html('登录中...').attr('disabled', 'disabled');
 			that.requestLogin.call(that, email, pwd);
@@ -69,13 +78,14 @@ var Login = {
 	},
 
 	requestLogin: function(email, pwd) {
-        var that = this;
+	    var that = this;
         Users.getInstance().remote.login(email, pwd, function(err){
             if(err){
-                that.$errorMsg.html(JSON.parse(err.responseText).message).removeClass('hide');
+                that.$errorMsg.html(err).removeClass('hide');
                 that.$loginBtn.html('登录').removeAttr('disabled');
                 return;
             }
+			localStorage.setItem("_login_email_",email);
             window.location.href = '../web/main.html';
         })
 	},

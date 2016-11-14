@@ -13,12 +13,15 @@ var SessionMembers = function(session){
                 this.createdAt = sessionMember.createdAt;
             if(this.updatedAt < sessionMember.updatedAt)
                 this.updatedAt = sessionMember.updatedAt;
+
+
         }
-    }
+        //console.log("session["+this.session.id+"].mts:"+this.createdAt);
+    };
     this.remove = function(userId){
         delete _list[userId];
         _localStorage.setList(_list);
-    }
+    };
     this.addSessionMembers = function(list){
         for(var i = 0; i < list.length; i++){
             var sessionMember = this._add(list[i]);
@@ -26,10 +29,13 @@ var SessionMembers = function(session){
                 this.createdAt = sessionMember.createdAt;
             if(this.updatedAt < sessionMember.updatedAt)
                 this.updatedAt = sessionMember.updatedAt;
+
+
         }
+        //console.log("session["+this.session.id+"].mts:"+this.createdAt);
         if(list.length > 0)
             _localStorage.setList(_list);
-    }
+    };
     this._add = function(obj){
         var sessionMember = _list[obj['userId']];
         if(!sessionMember)
@@ -38,10 +44,10 @@ var SessionMembers = function(session){
             sessionMember.update(obj);
         _list[sessionMember.userId] = sessionMember;
         return sessionMember;
-    }
+    };
     this.createSessionMember = function(obj){
         return new SessionMember(this, obj);
-    }
+    };
     /**
      * 获取会话成员
      * @param userId:用户id
@@ -49,7 +55,29 @@ var SessionMembers = function(session){
      */
     this.getMember = function(userId){
         return _list[userId];
-    }
+    };
+    this.getMemberAndSync=function(userId){
+
+        var obj=_list[userId];
+        if(obj)
+           return obj;
+
+        obj=new SessionMember(this, {
+            id:-1,
+            name:userId=='system'?'系统':'新朋友',
+            pinyin:'xr',
+            createdAt:new Date(1900,1,1).getTime(),
+            updatedAt:new Date(1900,1,1).getTime(),
+            userId:userId,
+            isDelete:true,
+            role:"user",
+            status:"active"
+        });
+        this.remote.sync(function(){ });
+        return obj;
+
+
+    };
     /**
      * 获取会话成员列表
      * @returns [sessionMember]
@@ -57,11 +85,27 @@ var SessionMembers = function(session){
     this.getMembers = function(){
         var foo = [];
         for(var k in _list){
-            if(!_list[k].isDelete)
+            if(!_list[k].isDelete && _list[k].role!='email')
                 foo.push(_list[k]);
         }
         return foo;
-    }
+    };
+    this.getAllMembers = function(){
+        var foo = [];
+        for(var k in _list){
+            if(_list[k].role!='email')
+                foo.push(_list[k]);
+        }
+        return foo;
+    };
+    this.getEmailMembers=function(){
+        var foo = [];
+        for(var k in _list){
+            if(!_list[k].isDelete && _list[k].role=='email')
+                foo.push(_list[k]);
+        }
+        return foo;
+    };
     /**
      * 获取p2p会话相对方的会话成员对象
      * @param userId
@@ -73,25 +117,25 @@ var SessionMembers = function(session){
                 return _list[k];
         }
         return null;
-    }
+    };
     this.remote = new sessionMembersRemote(this);
     this.init();
-}
+};
 var sessionMembersLocalStorage = function(sessionMembers){
     this.sessionMembers = sessionMembers;
-}
+};
 sessionMembersLocalStorage.prototype.getList = function(){
     var list = localStorage.getItem(this.sessionMembers.session.sessions.user.id + '_' + this.sessionMembers.session.id + '_sessionMembers');
     if(!list)
         return {};
     return JSON.parse(list);
-}
+};
 sessionMembersLocalStorage.prototype.setList = function(list){
     localStorage.setItem(this.sessionMembers.session.sessions.user.id + '_' + this.sessionMembers.session.id + '_sessionMembers', JSON.stringify(list));
-}
+};
 var sessionMembersRemote = function(sessionMembers) {
     this.sessionMembers = sessionMembers;
-}
+};
 sessionMembersRemote.prototype.sync = function(cb) {
     cb = cb || nop;
     var that = this;
@@ -103,8 +147,8 @@ sessionMembersRemote.prototype.sync = function(cb) {
         }
         that.sessionMembers.addSessionMembers(data.entries);
         cb();
-    })
-}
+    });
+};
 /**
  * 添加会话成员
  * @param userId:用户id
@@ -124,7 +168,7 @@ sessionMembersRemote.prototype.add = function(userId, name, role, avatarUrl, sta
         role: role,
         avatarUrl: avatarUrl,
         status: status
-    }
+    };
     baseRequest.post(url, params, that.sessionMembers.session.sessions.user.token, function(err, data){
         if(err){
             cb(err);
@@ -132,7 +176,22 @@ sessionMembersRemote.prototype.add = function(userId, name, role, avatarUrl, sta
         }
         cb(null, data);
     })
-}
+};
+sessionMembersRemote.prototype.invite = function(email, cb) {
+    var that = this;
+    cb = cb || nop;
+    var url = 'sessions/' + that.sessionMembers.session.id + '/members/invite';
+    var params = {
+        email: email
+    };
+    baseRequest.post(url, params, that.sessionMembers.session.sessions.user.token, function(err, data){
+        if(err){
+            cb(err);
+            return;
+        }
+        cb(null, data);
+    });
+};
 /**
  * 删除会话成员
  * @param memberId:会话成员id
@@ -149,23 +208,44 @@ sessionMembersRemote.prototype.remove = function(memberId, cb){
         }
         cb(null);
     })
-}
+};
+sessionMembersRemote.prototype.update = function(memberId,userId,name,role,avatarUrl,status, cb){
+    var that = this;
+    cb = cb || nop;
+    var url = 'sessions/' + that.sessionMembers.session.id + '/members/'+memberId;
+    var params = {
+        userId: userId,
+        name: name,
+        role: role,
+        avatarUrl: avatarUrl,
+        status: status
+    };
+    baseRequest.put(url, params, that.sessionMembers.session.sessions.user.token, function(err, data){
+        if(err){
+            cb(err);
+            return;
+        }
+        cb(null, data);
+    })
+};
 
 var SessionMember = function(sessionMembers, obj){
     this.sessionMembers = sessionMembers;
     this.id = obj['id'];
     this.name = obj['name'];
     this.pinyin = obj['pinyin'];
+    this.account = obj['email'];
     this.createdAt = new Date(obj['createdAt']).getTime();
     this.updatedAt = new Date(obj['updatedAt']).getTime();
     this.userId = obj['userId'];
     this.isDelete = obj['isDelete'];
     this.role = obj['role'];
     this.status = obj['status'];
+    this.time=obj['time'];
     this.user = Users.getInstance().get(this.userId);
     if(!this.user && this.userId && this.userId.length)
         this.user = Users.getInstance().create(obj['userId'], obj['name'], obj['email'], obj['avatarUrl']);
-}
+};
 SessionMember.prototype.update = function(obj){
     this.name = obj['name'];
     this.pinyin = obj['pinyin'];
@@ -174,12 +254,14 @@ SessionMember.prototype.update = function(obj){
     this.isDelete = obj['isDelete'];
     this.role = obj['role'];
     this.status = obj['status'];
-}
+    this.time=obj['time'];
+};
 SessionMember.prototype.toJSON = function(){
     return {
         id: this.id,
         name: this.name,
         pinyin: this.pinyin,
+        //email:this.email,
         createdAt: this.createdAt,
         updatedAt: this.updatedAt,
         userId: this.userId,
@@ -187,11 +269,11 @@ SessionMember.prototype.toJSON = function(){
         role: this.role,
         status: this.status
     }
-}
+};
 /**
  * 获取头像
  * @returns url
  */
 SessionMember.prototype.getAvatarUrl = function(){
     return this.user.getAvatarUrl();
-}
+};

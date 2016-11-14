@@ -12,13 +12,29 @@ var chooseAvatar = function(){
     this.$choose = $('<button class="f-fl btn btn-edit radius5px radius4p choose">选择图片</button>').appendTo(this.$footer);
 }
 chooseAvatar.prototype.show = function(options){
+    this.showAndUpload({
+        onChange:function(error,url){
+            currentUser.avatarUrl = url;
+            currentUser.remote.store(function(err){
+                if(err){
+                    console.error(err);
+                    return;
+                }
+                if(options.onChange)
+                    options.onChange();
+            })
+        },
+        onCancel:options.onCancel
+    });
+};
+chooseAvatar.prototype.showAndUpload = function(options){
     var that = this;
     this.$file = $('<input type="file" class="cropit-image-input hide" />');
     this.$imageEditor.append(this.$file);
     this.$imageEditor.append('<div class="cropit-preview" />');
     this.$imageEditor.append('<div class="cropit-preview-zoom-bar"><img src="images/image.png" class="cropit-preview-zoom-image-min" /><input type="range" class="cropit-image-zoom-input" /><img src="images/image.png" class="cropit-preview-zoom-image-max" /></div>');
     this.$chooseAvatar.removeClass('hide');
-    this.$imageEditor.cropit();
+    this.$imageEditor.cropit({smallImage:'allow',maxZoom:5});
     this.$choose.on('click', function(){
         that.$file.click();
     });
@@ -32,16 +48,10 @@ chooseAvatar.prototype.show = function(options){
                 return;
             }
             else{
-                currentUser.avatarUrl = 'attachments/' + data.id + '/content';
-                currentUser.remote.store(function(err){
-                    if(err){
-                        console.error(err);
-                        return;
-                    }
-                    that.hide();
-                    if(options.onChange)
-                        options.onChange();
-                })
+                var url = 'attachments/' + data.id + '/'+data.md5;
+                if(options.onChange)
+                    options.onChange(null,url);
+                that.hide();
             }
         })
     });
@@ -57,4 +67,4 @@ chooseAvatar.prototype.hide = function(){
     this.$chooseAvatar.addClass('hide');
     this.$choose.off('click');
     this.$save.off('click');
-}
+};

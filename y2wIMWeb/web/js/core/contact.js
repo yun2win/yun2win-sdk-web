@@ -100,7 +100,7 @@ contactsRemote.prototype.add = function(userId, name, cb) {
     var params = {
         userId: userId,
         name: name
-    }
+    };
     baseRequest.post(url, params, that.contacts.user.token, function(err, data){
         if(err){
             cb(err);
@@ -149,7 +149,7 @@ contactsRemote.prototype.remove = function(contactId, cb){
         }
         cb();
     })
-}
+};
 
 var Contact = function(contacts, obj){
     this.contacts = contacts;
@@ -164,10 +164,11 @@ var Contact = function(contacts, obj){
     this.updatedAt = new Date(obj['updatedAt']).getTime();
     this.userId = obj['userId'];
     this.user = Users.getInstance().get(this.userId);
+    this.account=obj['email'];
     if(this.user === undefined)
         this.user = Users.getInstance().create(obj['userId'], obj['name'], obj['email'], obj['avatarUrl']);
     this.avatarUrl = obj['avatarUrl'] || ' ';
-}
+};
 Contact.prototype.update = function(obj){
     this.name = obj['name'];
     this.pinyin = obj['pinyin'];
@@ -178,7 +179,7 @@ Contact.prototype.update = function(obj){
     this.createdAt = new Date(obj['createdAt']).getTime();
     this.updatedAt = new Date(obj['updatedAt']).getTime();
     this.avatarUrl = obj['avatarUrl'] || ' ';
-}
+};
 Contact.prototype.toJSON = function(){
     return {
         id: this.id,
@@ -187,6 +188,7 @@ Contact.prototype.toJSON = function(){
         title: this.title,
         titlePinyin: this.titlePinyin,
         remark: this.remark,
+        account:this.account,
         isDelete: this.isDelete,
         createdAt: this.createdAt,
         updatedAt: this.updatedAt,
@@ -199,7 +201,7 @@ Contact.prototype.toJSON = function(){
  * @returns name
  */
 Contact.prototype.getName = function(){
-    if(this.title && this.title.length > 0)
+    if(this.title && !/\s/.test(this.title) && this.title.length > 0)
         return this.title;
     return this.user.name;
 }
