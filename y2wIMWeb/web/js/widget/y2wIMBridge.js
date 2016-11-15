@@ -414,42 +414,44 @@ var y2wIMBridge = function(user, opts){
         var message = obj.message;
         if(obj.cmd == 'sendMessage'){
             var showNoti = false;
-            for(var i = 0; i < message.syncs.length; i++){
-                var syncObj = message.syncs[i];
-                if (syncObj.type == 1) {
-                    showNoti = true;
-                }
-                if (syncObj.type == "groupavcall" || syncObj.type == "singleavcall") {
-                    var receiversIds = syncObj.content.receiversIds;
-                    if (receiversIds) {
-                        for (var j = 0; j < receiversIds.length; j++) {
-                            if (receiversIds[j] == currentUser.id) {
-                                y2w.receive_AV_Mesage(syncObj);
-                                break;
+            if(message.syncs) {
+                for (var i = 0; i < message.syncs.length; i++) {
+                    var syncObj = message.syncs[i];
+                    if (syncObj.type == 1) {
+                        showNoti = true;
+                    }
+                    if (syncObj.type == "groupavcall" || syncObj.type == "singleavcall") {
+                        var receiversIds = syncObj.content.receiversIds;
+                        if (receiversIds) {
+                            for (var j = 0; j < receiversIds.length; j++) {
+                                if (receiversIds[j] == currentUser.id) {
+                                    y2w.receive_AV_Mesage(syncObj);
+                                    break;
+                                }
                             }
                         }
+                        break;
                     }
-                    break;
+                    var status = that.getSyncStatus(syncObj);
+                    switch (status) {
+                        case that.syncStatus.none:
+                            that.setSyncStatus(syncObj, that.syncStatus.syncing);
+                            break;
+                        case that.syncStatus.syncing:
+                        case that.syncStatus.repeat:
+                            that.setSyncStatus(syncObj, that.syncStatus.repeat);
+                            break;
+                    }
                 }
-                var status = that.getSyncStatus(syncObj);
-                switch (status){
-                    case that.syncStatus.none:
-                        that.setSyncStatus(syncObj, that.syncStatus.syncing);
-                        break;
-                    case that.syncStatus.syncing:
-                    case that.syncStatus.repeat:
-                        that.setSyncStatus(syncObj, that.syncStatus.repeat);
-                        break;
-                }
-            }
 
-            if (Notification.permission == 'granted' && showNoti) {
-                var n = new Notification('yun2win', {body: '您有一条新消息'});
-                n.onshow = function() {
-                    setTimeout(function() {
-                        n.close();
-                    }, 5000);
-                };
+                if (Notification.permission == 'granted' && showNoti) {
+                    var n = new Notification('yun2win', {body: '您有一条新消息'});
+                    n.onshow = function () {
+                        setTimeout(function () {
+                            n.close();
+                        }, 5000);
+                    };
+                }
             }
         }
     };
