@@ -256,7 +256,7 @@ var y2wIMBridge = function(user, opts){
                     opts.onStatusChanged('disConnected');
                 break;
             case that.connectionStatus.connected:
-                console.log('connected');
+                console.log('connected at ' + Util.dateFormat(new Date(), 'yyyy-MM-dd HH:mm:ss'));
                 if(opts.onStatusChanged)
                     opts.onStatusChanged('connected');
                 break;
