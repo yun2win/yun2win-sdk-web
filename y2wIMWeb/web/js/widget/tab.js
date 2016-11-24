@@ -51,6 +51,9 @@ tab.prototype.getInfo = function (tabType, obj) {
             info.name = userConversation.getName();
             info.top=userConversation.top;
             info.avatarUrl = userConversation.getAvatarUrl();
+
+            if(info.extend && info.extend.type == 'conference')
+                return null;
             return info;
         case this.tabType.contact:
             var contact = obj;
