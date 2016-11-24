@@ -103,7 +103,9 @@ chatInfo.prototype.show = function(){
         var user = currentUser.currentSession.members.getP2POtherSideMember(currentUser.id).user;
         var contact = currentUser.contacts.get(user.id);
         var userConversation = currentUser.userConversations.get('p2p', user.id);
-        var title = contact ? contact.title : userConversation.getName();
+        var title = '';
+        if(contact && contact.title)
+            title = contact.title;
         this.$editContactTitle.removeClass('hide');
         this.$editContactTitle.find('span.text').removeClass('hide').text(title);
         this.$editContactTitle.find('button.editor').removeClass('hide').on('click', this.editChatInfo.bind(that, this.$editContactTitle, this.editContactTitle));
